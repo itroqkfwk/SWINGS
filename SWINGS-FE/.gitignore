@@ -1,0 +1,48 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 환경변수 파일
+.env.local
+.env.*.local
+
+#pwa 자동 생성 파일
+dist/
+dev-dist/
+dist/*
+dev-dist/*
+**/workbox-*.js
+
+# Firebase key
+src/main/resources/firebase/firebase-service-account.json
+
+# AWS S3 key
+swings-key.pem
+
+.env*
+*.pem
+*.key
+aws-credentials.json
+
+src/sw.js
