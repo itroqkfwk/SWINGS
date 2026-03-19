@@ -13,16 +13,15 @@ import {
   Settings,
   KeyRound,
   Trash2,
+  Shield,
   UserCircle,
-  ImageIcon,
-  ArrowLeft,
   Pencil,
   X,
 } from "lucide-react";
 import IntroduceEditor from "../components/IntroduceEditor";
 import ProfileImageUploader from "../components/ProfileImageUploader";
 import PasswordChangeForm from "../components/PasswordChangeForm";
-import DeleteUserModal from "../components/DeleteUserModal"; // ✅ 회원탈퇴 모달 컴포넌트
+import DeleteUserModal from "../components/DeleteUserModal";
 import { toast } from "react-toastify";
 import { IoIosArrowBack } from "react-icons/io";
 
@@ -31,12 +30,10 @@ export default function MyPage() {
   const [formData, setFormData] = useState(null);
   const [point, setPoint] = useState(0);
   const [loading, setLoading] = useState(true);
-
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageFile, setImageFile] = useState(null);
-
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false); // ✅ 회원탈퇴 모달
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -46,11 +43,12 @@ export default function MyPage() {
         const balance = await getPointBalance();
         setPoint(balance);
       } catch (err) {
-        console.error("유저 정보 또는 포인트 불러오기 실패:", err);
+        console.error("유저 정보 또는 포인트를 불러오지 못했습니다.", err);
       } finally {
         setLoading(false);
       }
     };
+
     loadUser();
   }, []);
 
@@ -61,26 +59,25 @@ export default function MyPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center text-gray-400 h-[calc(100vh-128px)]">
+      <div className="flex h-[calc(100vh-128px)] items-center justify-center text-gray-400">
         로딩 중...
       </div>
     );
   }
 
   return (
-    <div className="bg-white px-4 py-8 min-h-screen relative">
+    <div className="min-h-screen bg-white px-4 py-8 relative">
       <button
         onClick={() => navigate("/swings/social")}
-        className="absolute top-4 left-4 p-2 rounded-full bg-white transition z-10"
+        className="absolute left-4 top-4 z-10 rounded-full bg-white p-2 transition"
         aria-label="뒤로가기"
       >
         <IoIosArrowBack size={20} className="text-gray-600" />
       </button>
 
-      {/* 프로필 영역 */}
-      <div className="flex flex-col items-center text-center mb-8 font-bold">
+      <div className="mb-8 flex flex-col items-center text-center font-bold">
         <div
-          className="relative w-24 h-24 cursor-pointer group"
+          className="group relative h-24 w-24 cursor-pointer"
           onClick={() => setShowImageModal(true)}
           title="프로필 이미지 수정"
         >
@@ -88,28 +85,25 @@ export default function MyPage() {
             <img
               src={getProfileImageUrl(formData.userImg)}
               alt="프로필"
-              className="w-24 h-24 object-cover rounded-full border-4 border-white shadow-md group-hover:brightness-95 transition"
+              className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-md transition group-hover:brightness-95"
             />
           ) : (
-            <div className="w-24 h-24 flex items-center justify-center rounded-full bg-gray-100 border-4 border-white shadow-md group-hover:brightness-95 transition">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gray-100 shadow-md transition group-hover:brightness-95">
               <UserCircle className="text-gray-300" size={80} />
             </div>
           )}
-          <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full border shadow group-hover:scale-105 transition">
+          <div className="absolute -bottom-1 -right-1 rounded-full border bg-white p-1 shadow transition group-hover:scale-105">
             <Pencil size={16} className="text-gray-600" />
           </div>
         </div>
-        <h2 className="text-2xl font-extrabold text-gray-800 mt-3 tracking-tight">
+        <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-gray-800">
           {formData?.username}
         </h2>
       </div>
 
-      {/* 자기소개 수정 */}
       {formData && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 shadow-sm">
-          <div className="text-sm text-gray-500 mb-2 font-bold">
-            프로필 메시지
-          </div>
+        <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mb-2 text-sm font-bold text-gray-500">프로필 메시지</div>
           <IntroduceEditor
             initialText={formData.introduce || ""}
             onSave={async (newText) => {
@@ -118,16 +112,15 @@ export default function MyPage() {
                 setFormData({ ...formData, introduce: newText });
                 toast.success("자기소개가 저장되었습니다.");
               } catch (err) {
-                toast.error("자기소개 저장 실패");
+                toast.error("자기소개 저장에 실패했습니다.");
               }
             }}
           />
         </div>
       )}
 
-      {/* 보유 코인 */}
       <div
-        className="cursor-pointer backdrop-blur-sm bg-white/80 border border-gray-200 rounded-2xl p-4 mb-6 shadow-sm transition hover:shadow-md"
+        className="mb-6 cursor-pointer rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm transition hover:shadow-md"
         onClick={() => navigate("/swings/points")}
       >
         <div className="flex items-center justify-between">
@@ -135,14 +128,18 @@ export default function MyPage() {
             <Coins size={18} className="text-yellow-500" />
             <span className="text-sm font-bold">보유 하트</span>
           </div>
-          <div className="text-lg font-bold text-black">
-            {point.toLocaleString()}
-          </div>
+          <div className="text-lg font-bold text-black">{point.toLocaleString()}</div>
         </div>
       </div>
 
-      {/* 설정 액션들 */}
-      <div className="space-y-3 ">
+      <div className="space-y-3">
+        {formData?.role === "admin" && (
+          <LineAction
+            icon={<Shield size={18} />}
+            text="관리자 페이지"
+            onClick={() => navigate("/swings/admin")}
+          />
+        )}
         <LineAction
           icon={<Settings size={18} />}
           text="회원정보 수정"
@@ -157,22 +154,20 @@ export default function MyPage() {
           icon={<Trash2 size={18} />}
           text="회원 탈퇴"
           textColor="text-red-500"
-          onClick={() => setShowDeleteModal(true)} // ✅ 모달 열기
+          onClick={() => setShowDeleteModal(true)}
         />
       </div>
 
-      {/* 로그아웃 */}
-      <div className="text-center mt-10 text-sm">
+      <div className="mt-10 text-center text-sm">
         <button
           onClick={handleLogout}
-          className="text-gray-400 hover:text-red-500 flex items-center justify-center gap-1 transition"
+          className="flex items-center justify-center gap-1 text-gray-400 transition hover:text-red-500"
         >
           <LogOut size={16} />
           로그아웃
         </button>
       </div>
 
-      {/* 이미지 수정 모달 */}
       {showImageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <ProfileImageUploader
@@ -187,13 +182,12 @@ export default function MyPage() {
         </div>
       )}
 
-      {/* 비밀번호 변경 모달 */}
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
             <button
               onClick={() => setShowPasswordModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-black"
+              className="absolute right-4 top-4 text-gray-500 hover:text-black"
             >
               <X size={20} />
             </button>
@@ -202,7 +196,6 @@ export default function MyPage() {
         </div>
       )}
 
-      {/* 회원 탈퇴 모달 */}
       {showDeleteModal && (
         <DeleteUserModal onClose={() => setShowDeleteModal(false)} />
       )}
@@ -214,12 +207,15 @@ function LineAction({ icon, text, onClick, textColor = "text-gray-700" }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center justify-between px-4 py-3 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition ${textColor} outline-none focus:outline-none`}
+      className={`w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition hover:bg-gray-50 focus:outline-none ${textColor}`}
     >
-      <div className="flex items-center gap-3 text-sm">
-        {icon} {text}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3 text-sm">
+          {icon}
+          {text}
+        </div>
+        <span className="text-gray-300">&gt;</span>
       </div>
-      <span className="text-gray-300">›</span>
     </button>
   );
 }

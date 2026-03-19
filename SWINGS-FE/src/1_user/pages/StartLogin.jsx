@@ -1,258 +1,334 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGoogleLogin } from "@react-oauth/google";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { loginRequest, googleLoginRequest } from "../api/userApi";
 import { saveToken } from "../utils/userUtils";
-import { motion, AnimatePresence } from "framer-motion";
-import { jwtDecode } from "jwt-decode";
-import { useGoogleLogin } from "@react-oauth/google";
-import SakuraFall from "../components/SakuraFall";
+import { registerPushToken } from "../../5_notification/utils/registerPushToken";
 import SplashScreen from "../components/SplashScreen";
 import LoginLoadingScreen from "../components/LoginLoadingScreen";
 import FindPasswordModal from "../components/FindPasswordModal";
 
-const fadeDrop = {
+const containerVariants = {
   hidden: { opacity: 0, y: -20 },
   visible: { opacity: 1, y: 0 },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: (i) => ({
+  hidden: { opacity: 0, y: 16 },
+  visible: (index) => ({
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { delay: i * 0.1 },
+    transition: { delay: index * 0.08 },
   }),
 };
+
+function GoogleLoginButton({ onSuccess, onError }) {
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const result = await googleLoginRequest(tokenResponse.access_token);
+        onSuccess(result);
+      } catch (error) {
+        onError(error);
+      }
+    },
+    onError,
+    scope: "openid profile email",
+    flow: "implicit",
+  });
+
+  return (
+    <motion.button
+      type="button"
+      onClick={() => googleLogin()}
+      custom={7}
+      variants={itemVariants}
+      className="flex h-12 w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:shadow-sm"
+    >
+      <img
+        src="https://developers.google.com/identity/images/g-logo.png"
+        alt="Google"
+        className="mr-2 h-5 w-5"
+      />
+      Google로 로그인
+    </motion.button>
+  );
+}
 
 export default function StartLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
 
-  const [showSplash, setShowSplash] = useState(() => {
-    return localStorage.getItem("sawSplash") !== "true";
-  });
+  const [showSplash, setShowSplash] = useState(
+    () => localStorage.getItem("sawSplash") !== "true"
+  );
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-
   const [formData, setFormData] = useState({
     username: localStorage.getItem("savedUsername") || "",
     password: "",
   });
-  const [saveId, setSaveId] = useState(!!localStorage.getItem("savedUsername"));
+  const [saveId, setSaveId] = useState(Boolean(localStorage.getItem("savedUsername")));
   const [errorMessage, setErrorMessage] = useState("");
   const [showFindPasswordModal, setShowFindPasswordModal] = useState(false);
 
   useEffect(() => {
-    if (showSplash) {
-      const timer = setTimeout(() => {
-        setShowSplash(false);
-        localStorage.setItem("sawSplash", "true");
-      }, 3000);
-      return () => clearTimeout(timer);
+    if (!showSplash) {
+      return undefined;
     }
+
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+      localStorage.setItem("sawSplash", "true");
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, [showSplash]);
 
   const proceedAfterLogin = (accessToken) => {
     login(accessToken);
     saveToken(accessToken);
-    const decoded = jwtDecode(accessToken);
-    if (saveId) localStorage.setItem("savedUsername", formData.username);
-    else localStorage.removeItem("savedUsername");
+
+    if (saveId) {
+      localStorage.setItem("savedUsername", formData.username);
+    } else {
+      localStorage.removeItem("savedUsername");
+    }
 
     setIsLoggingIn(true);
+
     setTimeout(() => {
-      navigate(decoded.role === "admin" ? "/swings/admin" : "/swings/feed");
+      navigate("/swings/feed");
     }, 3600);
   };
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const result = await googleLoginRequest(tokenResponse.access_token);
-        if (result.accessToken) {
-          proceedAfterLogin(result.accessToken);
-        } else if (result.isNew) {
-          navigate("/swings/signup", {
-            state: { email: result.email, name: result.name },
-          });
-        }
-      } catch (err) {
-        setErrorMessage("Google 로그인 실패");
-      }
-    },
-    onError: () => setErrorMessage("Google 로그인 실패"),
-    scope: "openid profile email",
-    flow: "implicit",
-  });
+  const handleGoogleSuccess = (result) => {
+    if (result.accessToken) {
+      proceedAfterLogin(result.accessToken);
+      return;
+    }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (result.isNew) {
+      navigate("/swings/signup", {
+        state: { email: result.email, name: result.name },
+      });
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrorMessage("Google 로그인에 실패했습니다.");
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setErrorMessage("");
 
     try {
       const accessToken = await loginRequest(formData);
       proceedAfterLogin(accessToken);
-
       await registerPushToken(formData.username);
-
-      if (saveId) localStorage.setItem("savedUsername", formData.username);
-      else localStorage.removeItem("savedUsername");
     } catch (error) {
-      setErrorMessage(error.message || "로그인 중 오류 발생");
+      setErrorMessage(error.message || "로그인 중 오류가 발생했습니다.");
     }
   };
 
-  if (showSplash) return <SplashScreen />;
-  if (isLoggingIn) return <LoginLoadingScreen />;
+  if (showSplash) {
+    return <SplashScreen />;
+  }
+
+  if (isLoggingIn) {
+    return <LoginLoadingScreen />;
+  }
 
   return (
-    <div className="min-h-screen  border-none outline-none bg-gradient-to-br  from-pink-200 via-white to-blue-100 flex items-center justify-center relative overflow-hidden px-4">
-      <AnimatePresence>
-        <motion.div
-          variants={fadeDrop}
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-sm space-y-6 text-center z-10"
-        >
-          <motion.h1
-            className="text-4xl font-bold text-gray-800"
-            custom={0}
-            variants={itemVariants}
+    <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top,#ffe4ec_0%,#ffffff_45%,#dbeafe_100%)] px-4 py-8 sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-5xl items-center justify-center">
+        <AnimatePresence>
+          <motion.div
+            variants={containerVariants}
             initial="hidden"
             animate="visible"
+            exit="hidden"
+            transition={{ duration: 0.5 }}
+            className="grid w-full max-w-4xl gap-8 overflow-hidden rounded-[2rem] bg-white/80 p-6 shadow-xl ring-1 ring-white/60 backdrop-blur md:grid-cols-[1.05fr_0.95fr] md:p-8"
           >
-            SWINGS
-          </motion.h1>
-          <motion.p
-            className="text-gray-600 animate-bounce"
-            custom={1}
-            variants={itemVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            나랑 골프치러 갈래?
-          </motion.p>
+            <div className="flex flex-col justify-center rounded-[1.5rem] bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 p-8 text-white">
+              <motion.p
+                custom={0}
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                className="text-sm font-semibold uppercase tracking-[0.3em] text-white/80"
+              >
+                Golf Social Club
+              </motion.p>
+              <motion.h1
+                custom={1}
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                className="mt-4 text-4xl font-black leading-tight sm:text-5xl"
+              >
+                SWINGS
+              </motion.h1>
+              <motion.p
+                custom={2}
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                className="mt-4 text-sm leading-6 text-white/90 sm:text-base"
+              >
+                골프로 시작하는 가벼운 연결.
+                <br />
+                라운드 메이트를 찾고, 대화를 이어가고, 모임까지 한 번에 관리하세요.
+              </motion.p>
+            </div>
 
-          <motion.form
-            onSubmit={handleSubmit}
-            className="space-y-4 text-left"
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.input
-              custom={2}
-              variants={itemVariants}
-              type="text"
-              placeholder="아이디"
-              className="w-full border p-2 rounded border-none outline-none focus:outline-none text-black"
-              value={formData.username}
-              onChange={(e) =>
-                setFormData({ ...formData, username: e.target.value })
-              }
-            />
-            <motion.input
-              custom={3}
-              variants={itemVariants}
-              type="password"
-              placeholder="비밀번호"
-              className="w-full border p-2 rounded border-none outline-none focus:outline-none text-black"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-            />
+            <div className="flex flex-col justify-center">
+              <motion.div
+                custom={3}
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                className="mb-6"
+              >
+                <h2 className="text-2xl font-bold text-gray-900">로그인</h2>
+                <p className="mt-2 text-sm text-gray-500">
+                  계정 정보를 입력하고 서비스를 시작하세요.
+                </p>
+              </motion.div>
 
-            <motion.div
-              className="flex items-center justify-between mt-1 text-sm px-1"
-              custom={4}
-              variants={itemVariants}
-            >
-              <label className="inline-flex items-center gap-2 text-gray-700 select-none">
-                <input
-                  type="checkbox"
-                  checked={saveId}
-                  onChange={(e) => setSaveId(e.target.checked)}
-                  className="w-4 h-4 rounded border border-gray-300 bg-white checked:bg-custom-pink accent-custom-pink transition"
+              <motion.form
+                onSubmit={handleSubmit}
+                className="space-y-4"
+                initial="hidden"
+                animate="visible"
+              >
+                <motion.input
+                  custom={4}
+                  variants={itemVariants}
+                  type="text"
+                  placeholder="아이디"
+                  className="h-12 w-full rounded-2xl border border-gray-200 px-4 text-sm text-gray-900 outline-none transition focus:border-rose-400"
+                  value={formData.username}
+                  onChange={(event) =>
+                    setFormData({ ...formData, username: event.target.value })
+                  }
                 />
 
-                <span className="text-gray-500 font-semibold">아이디 저장</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowFindPasswordModal(true)}
-                className="text-gray-500 font-semibold text-sm hover:underline transition"
+                <motion.input
+                  custom={5}
+                  variants={itemVariants}
+                  type="password"
+                  placeholder="비밀번호"
+                  className="h-12 w-full rounded-2xl border border-gray-200 px-4 text-sm text-gray-900 outline-none transition focus:border-rose-400"
+                  value={formData.password}
+                  onChange={(event) =>
+                    setFormData({ ...formData, password: event.target.value })
+                  }
+                />
+
+                <motion.div
+                  custom={6}
+                  variants={itemVariants}
+                  className="flex items-center justify-between gap-3 text-sm"
+                >
+                  <label className="inline-flex items-center gap-2 text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={saveId}
+                      onChange={(event) => setSaveId(event.target.checked)}
+                      className="h-4 w-4 rounded border border-gray-300 accent-custom-pink"
+                    />
+                    아이디 저장
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowFindPasswordModal(true)}
+                    className="font-semibold text-gray-500 transition hover:text-gray-900"
+                  >
+                    비밀번호 찾기
+                  </button>
+                </motion.div>
+
+                <motion.button
+                  type="submit"
+                  custom={7}
+                  variants={itemVariants}
+                  className={`h-12 w-full rounded-2xl text-sm font-bold text-white transition ${
+                    formData.username && formData.password
+                      ? "bg-custom-purple shadow-md"
+                      : "bg-custom-purple-empty"
+                  }`}
+                >
+                  로그인
+                </motion.button>
+              </motion.form>
+
+              <motion.div
+                custom={8}
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                className="my-5 flex items-center"
               >
-                비밀번호 찾기
-              </button>
-            </motion.div>
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="px-3 text-xs font-medium text-gray-400">또는</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </motion.div>
 
-            <motion.button
-              type="submit"
-              custom={5}
-              variants={itemVariants}
-              className={`border-none outline-none w-full ${
-                formData.username && formData.password
-                  ? "bg-custom-purple"
-                  : "bg-custom-purple-empty"
-              } text-white font-bold py-2 rounded-lg shadow transition `}
-            >
-              로그인
-            </motion.button>
-          </motion.form>
+              {googleClientId ? (
+                <GoogleLoginButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                />
+              ) : (
+                <motion.button
+                  type="button"
+                  custom={9}
+                  variants={itemVariants}
+                  disabled
+                  className="h-12 w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-100 text-sm font-semibold text-gray-400"
+                >
+                  Google 로그인 비활성화
+                </motion.button>
+              )}
 
-          <motion.div
-            className="flex items-center my-4"
-            custom={6}
-            variants={itemVariants}
-          >
-            <div className="flex-grow h-px bg-gray-300" />
-            <span className="px-3 text-gray-400 text-sm">또는</span>
-            <div className="flex-grow h-px bg-gray-300" />
+              <motion.button
+                type="button"
+                onClick={() => navigate("/swings/signup")}
+                custom={10}
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                className="mt-4 h-12 w-full rounded-2xl bg-custom-pink text-sm font-bold text-white transition hover:opacity-95"
+              >
+                회원가입
+              </motion.button>
+            </div>
           </motion.div>
-
-          <motion.button
-            onClick={() => googleLogin()}
-            custom={7}
-            variants={itemVariants}
-            className="w-full flex items-center justify-center bg-white border border-gray-300 rounded-lg py-2 text-gray-700 font-medium hover:shadow"
-          >
-            <img
-              src="https://developers.google.com/identity/images/g-logo.png"
-              alt="Google"
-              className="w-5 h-5 mr-2"
-            />
-            Google로 로그인
-          </motion.button>
-
-          <motion.button
-            onClick={() => navigate("/swings/signup")}
-            custom={8}
-            variants={itemVariants}
-            className="w-full bg-custom-pink border-none outline-none text-white font-semibold py-2 rounded-lg"
-          >
-            회원가입
-          </motion.button>
-        </motion.div>
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
 
       {showFindPasswordModal && (
         <FindPasswordModal onClose={() => setShowFindPasswordModal(false)} />
       )}
 
       {errorMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black opacity-40 backdrop-blur-sm" />
-          <div className="relative bg-white rounded-xl p-6 w-80 shadow-lg text-center space-y-4 animate-fadeIn z-50">
-            <h2 className="text-lg font-semibold text-gray-800">로그인 실패</h2>
-            <p className="text-sm text-gray-600 whitespace-pre-line">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
+            <h2 className="text-lg font-bold text-gray-900">로그인 실패</h2>
+            <p className="mt-3 whitespace-pre-line text-sm text-gray-600">
               {errorMessage}
             </p>
             <button
+              type="button"
               onClick={() => setErrorMessage("")}
-              className="mt-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition"
+              className="mt-5 rounded-xl bg-gray-800 px-4 py-2 text-sm font-semibold text-white"
             >
               확인
             </button>

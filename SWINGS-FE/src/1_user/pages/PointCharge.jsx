@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import CoinSelectModal from "../components/CoinSelectModal";
 import { fetchUserData } from "../api/userApi";
 
-// 코인 금액 옵션
 const coinOptions = [
   { coin: 5, price: 5000 },
   { coin: 10, price: 10000 },
@@ -15,20 +14,25 @@ const coinOptions = [
   { coin: 330, price: 300000, label: "300 + 10%" },
 ];
 
-// 하트 스타일 맵 (크기 + 색상)
 const getHeartStyle = (coin) => {
-  if (coin === 5)
+  if (coin === 5) {
     return { size: 24, textColor: "text-gray-300", fillColor: "fill-none" };
-  if (coin === 10)
+  }
+  if (coin === 10) {
     return { size: 28, textColor: "text-pink-200", fillColor: "fill-pink-100" };
-  if (coin === 33)
+  }
+  if (coin === 33) {
     return { size: 32, textColor: "text-pink-300", fillColor: "fill-pink-200" };
-  if (coin === 55)
+  }
+  if (coin === 55) {
     return { size: 36, textColor: "text-pink-400", fillColor: "fill-pink-300" };
-  if (coin === 110)
+  }
+  if (coin === 110) {
     return { size: 40, textColor: "text-pink-500", fillColor: "fill-pink-400" };
-  if (coin === 330)
+  }
+  if (coin === 330) {
     return { size: 44, textColor: "text-pink-600", fillColor: "fill-pink-500" };
+  }
   return { size: 24, textColor: "text-gray-300", fillColor: "fill-none" };
 };
 
@@ -41,7 +45,7 @@ export default function PointCharge() {
   useEffect(() => {
     fetchUserData()
       .then((data) => setUser(data))
-      .catch((err) => console.error("유저 정보 오류:", err));
+      .catch((error) => console.error("사용자 정보를 불러오지 못했습니다.", error));
   }, []);
 
   const handleCoinClick = (coin) => {
@@ -50,20 +54,24 @@ export default function PointCharge() {
   };
 
   return (
-    <div className="px-6 pt-6 pb-10 text-center space-y-8 relative">
-      {/* 뒤로가기 버튼 */}
+    <div className="relative min-h-screen bg-slate-50 px-5 pb-24 pt-6">
       <button
-        className="absolute left-4 top-4 text-gray-500 hover:text-black transition-colors"
+        type="button"
+        className="mb-4 flex items-center gap-1 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900"
         onClick={() => navigate("/swings/points")}
       >
-        <IoIosArrowBack size={24} />
+        <IoIosArrowBack size={20} />
+        포인트 내역으로 돌아가기
       </button>
 
-      <h1 className="text-2xl font-semibold text-[#2E384D] animate-fade-in">
-        충전소
-      </h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">포인트 충전</h1>
+        <p className="mt-2 text-sm text-gray-500">
+          원하는 상품을 선택하면 결제 화면으로 이동합니다.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-4 w-full max-w-md sm:max-w-3xl mx-auto">
+      <div className="grid w-full grid-cols-2 gap-4 sm:max-w-3xl sm:grid-cols-3">
         {coinOptions.map(({ coin, price, label }) => {
           const isEvent = coin >= 30;
           const { size, textColor, fillColor } = getHeartStyle(coin);
@@ -71,48 +79,45 @@ export default function PointCharge() {
           return (
             <button
               key={coin}
+              type="button"
               onClick={() => handleCoinClick(coin)}
-              className="group relative flex flex-col justify-between items-center border rounded-xl p-4 min-h-[160px] shadow-md hover:shadow-xl transition-transform duration-300 transform hover:scale-105 hover:-translate-y-1 bg-white"
+              className="group relative flex min-h-[176px] flex-col items-center justify-between rounded-2xl bg-white p-4 text-center shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-lg"
             >
-              {/* 이벤트 뱃지 */}
               {isEvent && (
-                <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] px-2 py-[2px] rounded-full font-semibold shadow">
+                <div className="absolute right-3 top-3 rounded-full bg-rose-500 px-2 py-1 text-[10px] font-bold text-white">
                   EVENT
                 </div>
               )}
 
-              {/* 아이콘 */}
-              <div className={`flex justify-center ${textColor}`}>
+              <div className={`mt-2 flex justify-center ${textColor}`}>
                 <Heart
                   size={size}
                   className={`transition-transform duration-300 group-hover:rotate-6 ${textColor} ${fillColor}`}
                 />
               </div>
 
-              {/* 하트 라벨 */}
-              <div className="text-lg font-bold text-black mt-3 text-center">
+              <div className="mt-3">
                 {label ? (
-                  <>
-                    <span>{label.split(" + ")[0]} + </span>
-                    <span className="text-red-500 font-extrabold">10%</span>
-                    <br />
-                    <span className="ml-1 text-gray-700">({coin}하트)</span>
-                  </>
+                  <p className="text-lg font-bold text-gray-900">
+                    {label.split(" + ")[0]} +{" "}
+                    <span className="text-rose-500">10%</span>
+                    <span className="mt-1 block text-sm font-medium text-gray-500">
+                      총 {coin}포인트
+                    </span>
+                  </p>
                 ) : (
-                  `${coin}하트`
+                  <p className="text-lg font-bold text-gray-900">{coin}포인트</p>
                 )}
               </div>
 
-              {/* 가격 */}
-              <div className="text-sm text-gray-600 mt-1">
-                ₩{price.toLocaleString()}
+              <div className="text-sm font-medium text-gray-500">
+                {price.toLocaleString()}원
               </div>
             </button>
           );
         })}
       </div>
 
-      {/* 결제 모달 */}
       {isModalOpen && user?.userId && (
         <CoinSelectModal
           isOpen={isModalOpen}

@@ -1,19 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-
 import useUser from "../hooks/useUser";
 import useNewPostForm from "../hooks/useNewPostForm";
 import useIntersectionObserver from "../hooks/useIntersectionObserver";
 import usePullToRefresh from "../hooks/usePullToRefresh";
 import useFeedData from "../hooks/useFeedData";
-
 import CreatePostButton from "../components/CreatePostButton";
 import FeedPost from "../components/FeedPost";
 import NewPostForm from "../components/NewPostForm";
 import ImageModal from "../components/ImageModal";
 import LikedUsersModal from "../components/LikedUsersModal";
 import ProfileImageUploaderStart from "../../1_user/components/ProfileImageUploaderStart";
-
 import feedApi from "../api/feedApi";
 import socialApi from "../api/socialApi";
 
@@ -33,7 +30,6 @@ const FeedPage = () => {
   const {
     posts,
     setPosts,
-    refreshFeeds,
     handleLikeToggle,
     handleDelete,
     handleCommentSubmit,
@@ -47,14 +43,16 @@ const FeedPage = () => {
   const {
     newPostContent,
     setNewPostContent,
-    newPostImage,
     imagePreview,
     handleImageChange,
     reset,
   } = useNewPostForm();
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
+
     const init = async () => {
       try {
         const user = await feedApi.getCurrentUser();
@@ -73,14 +71,16 @@ const FeedPage = () => {
         setStep(0);
         await loadFeeds(order[0], user);
       } catch {
-        console.error("사용자 정보를 불러오는 데 실패했습니다.");
+        console.error("사용자 정보를 불러오지 못했습니다.");
       }
     };
+
     init();
   }, [userId]);
 
   useEffect(() => {
     document.body.style.overflow = showProfileUploader ? "hidden" : "";
+
     return () => {
       document.body.style.overflow = "";
     };
@@ -88,6 +88,7 @@ const FeedPage = () => {
 
   const loadFeeds = async (type, user) => {
     setLoading(true);
+
     try {
       let newFeeds = [];
 
@@ -97,7 +98,6 @@ const FeedPage = () => {
         const followings = (await socialApi.getFollowings?.(user.userId)) || [];
         const filter =
           type === "followings" && followings.length > 0 ? "followings" : "all";
-
         const sort = type === "followings" ? "latest" : "random";
 
         newFeeds = await feedApi.getFeeds(user.userId, 0, 10, {
@@ -107,35 +107,38 @@ const FeedPage = () => {
       }
 
       setPosts((prev) => {
-        const existingIds = new Set(prev.map((p) => p.feedId));
+        const existingIds = new Set(prev.map((post) => post.feedId));
         const uniqueNewFeeds = newFeeds.filter(
-          (f) => !existingIds.has(f.feedId)
+          (feed) => !existingIds.has(feed.feedId)
         );
         return [...prev, ...uniqueNewFeeds];
       });
     } catch {
-      console.error("피드를 불러오는 데 실패했습니다.");
+      console.error("피드를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
   };
 
   const loadMoreFeeds = async () => {
-    if (loading || !currentUser || step >= feedOrder.length) return;
+    if (loading || !currentUser || step >= feedOrder.length) {
+      return;
+    }
 
     setLoading(true);
+
     try {
-      const prevPostsLength = posts.length;
+      const previousLength = posts.length;
 
       await loadFeeds(feedOrder[step], currentUser);
 
-      const isSameLength = posts.length === prevPostsLength;
+      const isSameLength = posts.length === previousLength;
       if (isSameLength && step < feedOrder.length - 1) {
         setStep((prev) => prev + 1);
         await loadFeeds(feedOrder[step + 1], currentUser);
       }
-    } catch (err) {
-      console.error("피드 로딩 실패:", err);
+    } catch (error) {
+      console.error("피드 추가 로딩에 실패했습니다.", error);
     } finally {
       setStep((prev) => prev + 1);
       setLoading(false);
@@ -150,7 +153,10 @@ const FeedPage = () => {
 
   const { isRefreshing } = usePullToRefresh({
     onRefresh: async () => {
-      if (!currentUser) return;
+      if (!currentUser) {
+        return;
+      }
+
       const order = ["followings", "all", "mine"];
       setFeedOrder(order);
       setStep(0);
@@ -162,12 +168,18 @@ const FeedPage = () => {
 
   const togglePostForm = () => {
     setShowNewPostForm((prev) => !prev);
-    if (showNewPostForm) reset();
+    if (showNewPostForm) {
+      reset();
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!userId) return console.error("로그인 후 작성해주세요");
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!userId) {
+      console.error("로그인 후 게시글을 작성할 수 있습니다.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("userId", userId);
@@ -184,7 +196,7 @@ const FeedPage = () => {
       setSelectedImage(null);
       setShowNewPostForm(false);
     } catch {
-      console.error("업로드 실패");
+      console.error("게시글 업로드에 실패했습니다.");
     }
   };
 
@@ -194,14 +206,14 @@ const FeedPage = () => {
       setLikedUsers(users);
       setIsLikedModalOpen(true);
     } catch {
-      console.error("좋아요 목록 불러오기 실패");
+      console.error("좋아요 목록을 불러오지 못했습니다.");
     }
   };
 
   return (
-    <div className="bg-white min-h-screen pt-4 sm:pt-8 md:pt-12">
+    <div className="min-h-[calc(100vh-8rem)] bg-white">
       {showProfileUploader ? (
-        <div className="fixed inset-0 flex justify-center items-center z-[999] bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40">
           <ProfileImageUploaderStart
             imageFile={imageFile}
             setImageFile={setImageFile}
@@ -218,8 +230,8 @@ const FeedPage = () => {
           />
 
           {isRefreshing && (
-            <div className="text-center py-3 text-sm text-blue-500 animate-pulse">
-              🔄 새로고침 중입니다...
+            <div className="py-3 text-center text-sm text-blue-500 animate-pulse">
+              피드를 새로고침하는 중입니다...
             </div>
           )}
 
@@ -231,7 +243,7 @@ const FeedPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 30 }}
                 transition={{ duration: 0.3 }}
-                className="fixed inset-0 z-50 bg-transparent flex items-center justify-center"
+                className="fixed inset-0 z-50 flex items-center justify-center bg-transparent"
               >
                 <div ref={formRef} className="w-[90vw] max-w-md px-4">
                   <NewPostForm
@@ -254,19 +266,25 @@ const FeedPage = () => {
 
           <div
             ref={containerRef}
-            className="w-full px-4 md:px-12 h-full overflow-y-auto"
-            style={{ height: "calc(100vh - 64px)" }}
+            className="w-full px-4 py-4 md:px-6 lg:px-8 xl:px-10"
           >
             <div className="space-y-4 pb-24">
               {loading && (
-                <div className="text-center py-8 text-gray-500 text-sm">
-                  피드를 불러오는 중...
+                <div className="py-8 text-center text-sm text-gray-500">
+                  피드를 불러오는 중입니다...
                 </div>
               )}
 
               {!loading && posts.length === 0 && (
-                <div className="text-center py-8 text-gray-400 text-sm">
-                  표시할 피드가 없습니다.
+                <div className="flex min-h-[calc(100vh-14rem)] items-center justify-center">
+                  <div className="w-full max-w-xl rounded-3xl border border-gray-100 bg-slate-50 px-6 py-12 text-center shadow-sm">
+                    <p className="text-lg font-semibold text-slate-700">
+                      표시할 피드가 없습니다.
+                    </p>
+                    <p className="mt-3 text-sm text-slate-400">
+                      첫 게시글을 작성하거나 다른 사용자와 연결을 시작해보세요.
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -286,10 +304,13 @@ const FeedPage = () => {
                     onUnlike={() => handleLikeToggle(post.feedId, true)}
                     onToggleComments={(feedId) => {
                       setPosts((prev) =>
-                        prev.map((p) =>
-                          p.feedId === feedId
-                            ? { ...p, showComments: !p.showComments }
-                            : p
+                        prev.map((currentPost) =>
+                          currentPost.feedId === feedId
+                            ? {
+                                ...currentPost,
+                                showComments: !currentPost.showComments,
+                              }
+                            : currentPost
                         )
                       );
                     }}
@@ -301,8 +322,10 @@ const FeedPage = () => {
                     onShowLikedBy={handleShowLikedBy}
                     updatePostInState={(updatedPost) =>
                       setPosts((prev) =>
-                        prev.map((p) =>
-                          p.feedId === updatedPost.feedId ? updatedPost : p
+                        prev.map((currentPost) =>
+                          currentPost.feedId === updatedPost.feedId
+                            ? updatedPost
+                            : currentPost
                         )
                       )
                     }

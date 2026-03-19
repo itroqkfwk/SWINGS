@@ -2,6 +2,7 @@ package com.swings.payment.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swings.payment.config.TossConfig;
 import com.swings.payment.dto.PaymentRequestDTO;
 import com.swings.user.entity.UserEntity;
 import com.swings.user.entity.UserPointEntity;
@@ -20,6 +21,7 @@ import java.time.OffsetDateTime;
 public class PaymentServiceImpl implements PaymentService {
 
     private final WebClient tossWebClient;
+    private final TossConfig tossConfig;
     private final UserRepository userRepository;
     private final UserPointRepository userPointRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -30,6 +32,10 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public String confirmPayment(PaymentRequestDTO requestDTO) {
         try {
+            if (!tossConfig.isConfigured()) {
+                throw new IllegalStateException("Toss secret is not configured");
+            }
+
             String response = tossWebClient.post()
                     .uri("/payments/confirm")
                     .bodyValue(requestDTO)

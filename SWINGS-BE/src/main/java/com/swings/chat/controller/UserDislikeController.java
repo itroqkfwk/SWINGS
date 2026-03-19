@@ -17,7 +17,7 @@ public class UserDislikeController {
     private final UserDislikeService userDislikeService;
 
     @PostMapping("/{fromUsername}/{toUsername}")
-    public ResponseEntity<String> dislikeUser(@PathVariable String fromUsername, @PathVariable String toUsername) {
+    public ResponseEntity<String> dislikeUser(@PathVariable("fromUsername") String fromUsername, @PathVariable("toUsername") String toUsername) {
         userDislikeService.dislikeUser(fromUsername, toUsername);
         return ResponseEntity.ok("싫어요를 눌렀습니다.");
     }

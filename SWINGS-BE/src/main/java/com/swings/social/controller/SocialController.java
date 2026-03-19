@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/social")
 @RequiredArgsConstructor
@@ -48,21 +47,21 @@ public class SocialController {
 
     // 특정 유저의 팔로워 목록 조회 (해당 유저를 팔로우하는 사용자들)
     @GetMapping("/followers/{userId}")
-    public ResponseEntity<List<UserDTO>> getFollowers(@PathVariable Long userId) {
+    public ResponseEntity<List<UserDTO>> getFollowers(@PathVariable("userId") Long userId) {
         return ResponseEntity.ok(socialService.getFollowers(userId));
     }
     
     // 특정 유저의 팔로잉 목록 조회 (해당 유저가 팔로우하는 사용자들)
     @GetMapping("/followings/{userId}")
-    public ResponseEntity<List<UserDTO>> getFollowings(@PathVariable Long userId) {
+    public ResponseEntity<List<UserDTO>> getFollowings(@PathVariable("userId") Long userId) {
         return ResponseEntity.ok(socialService.getFollowing(userId));
     }
 
     // 특정 사용자 간의 팔로우 여부 확인
     @GetMapping("/isFollowing")
     public ResponseEntity<String> isFollowing(
-            @RequestParam Long followerId,
-            @RequestParam Long followeeId) {
+            @RequestParam("followerId") Long followerId,
+            @RequestParam("followeeId") Long followeeId) {
         boolean result = socialService.isFollowing(followerId, followeeId);
         if (result) {
             return ResponseEntity.ok("팔로우 중입니다.");
@@ -73,7 +72,7 @@ public class SocialController {
 
     // 자기소개 추가 또는 수정
     @PostMapping("/update-introduce")
-    public ResponseEntity<String> updateIntroduce(@RequestParam Long userId, @RequestBody String introduce) {
+    public ResponseEntity<String> updateIntroduce(@RequestParam("userId") Long userId, @RequestBody String introduce) {
         boolean result = socialService.updateIntroduce(userId, introduce);
         if (result) {
             return ResponseEntity.ok("자기소개가 업데이트되었습니다.");
@@ -84,28 +83,28 @@ public class SocialController {
 
     // 특정 유저의 자기소개 조회
     @GetMapping("/introduce/{userId}")
-    public ResponseEntity<String> getIntroduce(@PathVariable Long userId) {
+    public ResponseEntity<String> getIntroduce(@PathVariable("userId") Long userId) {
         String introduce = socialService.getIntroduce(userId);
         return ResponseEntity.ok(introduce);
     }
     
     // 유저 피드 갯수 조회
     @GetMapping("/feeds/count/{userId}")
-    public ResponseEntity<Integer> getUserFeedCount(@PathVariable Long userId) {
+    public ResponseEntity<Integer> getUserFeedCount(@PathVariable("userId") Long userId) {
         int feedCount = feedService.getUserFeedCount(userId);
         return ResponseEntity.ok(feedCount);
     }
 
     // 특정 사용자의 피드 조회 (모든 사용자 가능)
     @GetMapping("/feeds/user/{userId}")
-    public ResponseEntity<?> getUserFeeds(@PathVariable Long userId) {
+    public ResponseEntity<?> getUserFeeds(@PathVariable("userId") Long userId) {
         List<FeedDTO> userFeeds = feedService.getFeedsByUserId(userId);
         return ResponseEntity.ok(userFeeds);
     }
 
     // 특정 사용자 정보 조회 (ID 기반)
     @GetMapping("/user/{userId}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long userId) {
+    public ResponseEntity<UserDTO> getUserById(@PathVariable("userId") Long userId) {
         UserEntity user = userRepository.findById(userId).orElse(null);
         if (user != null) {
             return ResponseEntity.ok(convertToDTO(user));
@@ -118,22 +117,22 @@ public class SocialController {
         return UserDTO.builder()
                 .userId(user.getUserId())
                 .username(user.getUsername())
-                .name(user.getName())
-                .birthDate(user.getBirthDate().toString())
+                .name(user.getName() != null ? user.getName() : "")
+                .birthDate(user.getBirthDate() != null ? user.getBirthDate().toString() : null)
                 .phonenumber(user.getPhonenumber())
                 .email(user.getEmail())
                 .job(user.getJob())
-                .golfSkill(user.getGolfSkill().name())
+                .golfSkill(user.getGolfSkill() != null ? user.getGolfSkill().name() : null)
                 .mbti(user.getMbti())
                 .hobbies(user.getHobbies())
                 .religion(user.getReligion())
-                .smoking(user.getSmoking().name())
-                .drinking(user.getDrinking().name())
-                .introduce(user.getIntroduce())
+                .smoking(user.getSmoking() != null ? user.getSmoking().name() : null)
+                .drinking(user.getDrinking() != null ? user.getDrinking().name() : null)
+                .introduce(user.getIntroduce() != null ? user.getIntroduce() : "")
                 .userImg(user.getUserImg())
-                .role(user.getRole().name())
-                .gender(user.getGender().name())
-                .activityRegion(user.getActivityRegion().name())
+                .role(user.getRole() != null ? user.getRole().name() : "player")
+                .gender(user.getGender() != null ? user.getGender().name() : null)
+                .activityRegion(user.getActivityRegion() != null ? user.getActivityRegion().name() : null)
                 .build();
     }
     

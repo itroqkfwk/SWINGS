@@ -17,7 +17,7 @@ export default defineConfig({
       manifest: {
         name: "SWINGS",
         short_name: "SWINGS",
-        description: "골프 그룹 매칭 서비스",
+        description: "Golf group matching service",
         theme_color: "#ffffff",
         start_url: "/swings",
         display: "standalone",

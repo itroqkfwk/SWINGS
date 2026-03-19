@@ -6,39 +6,47 @@ import { AiOutlineInstagram } from "react-icons/ai";
 import { HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
 
 const navItems = [
-  { to: "/swings/matchgroup", label: "조인", icon: Handshake },
+  { to: "/swings/matchgroup", label: "모임", icon: Handshake },
   { to: "/swings/match", label: "소개팅", icon: FaHeartCircleCheck },
   { to: "/swings/feed", label: "피드", icon: AiOutlineInstagram },
   { to: "/swings/chat", label: "채팅", icon: HiOutlineChatBubbleLeftRight },
-  { to: "/swings/social", label: "마이페이지", icon: CircleUser },
+  { to: "/swings/social", label: "마이", icon: CircleUser },
 ];
+
+function isActivePath(pathname, target) {
+  if (target === "/swings/feed") {
+    return pathname === target || pathname.startsWith("/swings/profile/");
+  }
+
+  return pathname === target || pathname.startsWith(`${target}/`);
+}
 
 export default function BottomNavBar() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-md z-50">
-      <div className="flex justify-between items-center h-16 text-xs text-gray-500">
+    <nav className="fixed bottom-0 z-50 w-full border-t border-slate-200 bg-white/95 backdrop-blur">
+      <div className="grid h-16 w-full grid-cols-5 px-1 text-[11px] text-slate-500 sm:px-4 lg:px-8">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.to;
+          const active = isActivePath(location.pathname, item.to);
           const Icon = item.icon;
 
           return (
             <Link
               key={item.to}
               to={item.to}
-              className={`relative w-[20%] flex flex-col items-center justify-center gap-[4px] transition-colors duration-200 ${
-                isActive ? "text-[#2E384D] font-semibold" : "text-gray-400"
+              className={`relative flex flex-col items-center justify-center gap-1 rounded-xl transition-colors duration-200 ${
+                active ? "font-semibold text-slate-900" : "text-slate-400"
               }`}
             >
               <motion.div
-                animate={{ scale: isActive ? 1.2 : 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                animate={{ scale: active ? 1.08 : 1, y: active ? -1 : 0 }}
+                transition={{ type: "spring", stiffness: 320, damping: 18 }}
+                className="flex items-center justify-center"
               >
-                <Icon className="w-7 h-7 text-current" />
+                <Icon className="h-5 w-5 text-current sm:h-6 sm:w-6" />
               </motion.div>
-
-              <span className="text-[12px] leading-tight text-center">
+              <span className="text-[10px] leading-none sm:text-[11px]">
                 {item.label}
               </span>
             </Link>

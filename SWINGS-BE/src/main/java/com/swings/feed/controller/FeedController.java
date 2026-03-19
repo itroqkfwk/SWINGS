@@ -13,6 +13,7 @@ import com.swings.user.repository.UserRepository;
 import lombok.Getter;
 import lombok.Setter;
 import net.coobird.thumbnailator.Thumbnails;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -22,14 +23,21 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
 //피드 관련 CRUD 및 댓글/좋아요 기능 처리 컨트롤러
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/feeds")
 public class FeedController {
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
+    @Value("${app.backend-base-url}")
+    private String backendBaseUrl;
 
     private final FeedService feedService;
     private final UserRepository userRepository;
@@ -50,9 +58,9 @@ public class FeedController {
     
     // 전체 피드 조회
     @GetMapping
-    public ResponseEntity<List<FeedDTO>> getFeeds(@RequestParam(required = false) Long userId,
-                                                  @RequestParam int page,
-                                                  @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<List<FeedDTO>> getFeeds(@RequestParam(name = "userId", required = false) Long userId,
+                                                  @RequestParam("page") int page,
+                                                  @RequestParam(name = "size", defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         List<FeedDTO> feeds = feedService.getAllFeeds(pageable, userId); 
@@ -62,11 +70,11 @@ public class FeedController {
     // 필터 및 정렬 조건 기반 피드 조회
     @GetMapping("/filtered")
     public ResponseEntity<List<FeedDTO>> getFilteredFeeds(
-            @RequestParam Long userId,
-            @RequestParam int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "latest") String sort,
-            @RequestParam(defaultValue = "all") String filter) {
+            @RequestParam("userId") Long userId,
+            @RequestParam("page") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sort", defaultValue = "latest") String sort,
+            @RequestParam(name = "filter", defaultValue = "all") String filter) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         List<FeedDTO> feeds = new ArrayList<>();
@@ -101,7 +109,7 @@ public class FeedController {
 
     // 메인 피드 조회 (팔로우 유저 -> 모든 유저 랜덤 -> 내 피드 순)
     @GetMapping("/main")
-    public ResponseEntity<List<FeedDTO>> getMainFeed(@RequestParam Long userId) {
+    public ResponseEntity<List<FeedDTO>> getMainFeed(@RequestParam("userId") Long userId) {
         Pageable pageable = PageRequest.of(0, 30, Sort.by("createdAt").descending());
 
         List<FeedDTO> result = new ArrayList<>();
@@ -129,13 +137,13 @@ public class FeedController {
     
     // 특정 유저 피드 조회
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<FeedDTO>> getFeedsByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<FeedDTO>> getFeedsByUserId(@PathVariable("userId") Long userId) {
         return ResponseEntity.ok(feedService.getFeedsByUserId(userId));
     }
     
     // 피드 한개 조회
     @GetMapping("/{feedId}")
-    public ResponseEntity<FeedDTO> getFeedById(@PathVariable Long feedId) {
+    public ResponseEntity<FeedDTO> getFeedById(@PathVariable("feedId") Long feedId) {
         return feedService.getFeedById(feedId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -144,7 +152,7 @@ public class FeedController {
     // 피드 수정 (이미지 포함 multipart)
     @PutMapping(value = "/{feedId}", consumes = {"multipart/form-data"})
     public ResponseEntity<FeedDTO> updateFeed(
-            @PathVariable Long feedId,
+            @PathVariable("feedId") Long feedId,
             @RequestPart("caption") String caption,
             @RequestPart(value = "file", required = false) MultipartFile file
     ) {
@@ -164,7 +172,7 @@ public class FeedController {
     
     // 피드 삭제
     @DeleteMapping("/{feedId}")
-    public ResponseEntity<Void> deleteFeed(@PathVariable Long feedId) {
+    public ResponseEntity<Void> deleteFeed(@PathVariable("feedId") Long feedId) {
         feedService.deleteFeed(feedId);
         return ResponseEntity.noContent().build();
     }
@@ -190,13 +198,12 @@ public class FeedController {
     
     // 내부 파일 저장 메서드
     private String saveFile(MultipartFile file) {
-        String uploadDir = "C:/uploads/";
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        String filePath = uploadDir + fileName;
         try {
-            File dest = new File(filePath);
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            File dest = uploadPath.resolve(fileName).toFile();
             Thumbnails.of(file.getInputStream()).size(800, 600).toFile(dest);
-            return "http://localhost:8090/swings/uploads/" + fileName;
+            return backendBaseUrl + "/uploads/" + fileName;
         } catch (IOException e) {
             throw new RuntimeException("File upload failed: " + e.getMessage());
         }
@@ -204,13 +211,13 @@ public class FeedController {
     
     // 좋아요 등록
     @PutMapping("/{feedId}/like")
-    public ResponseEntity<FeedDTO> likeFeed(@PathVariable Long feedId, @RequestParam Long userId) {
+    public ResponseEntity<FeedDTO> likeFeed(@PathVariable("feedId") Long feedId, @RequestParam("userId") Long userId) {
         return ResponseEntity.ok(feedService.likeFeed(feedId, userId));
     }
     
     // 좋아요 취소
     @PutMapping("/{feedId}/unlike")
-    public ResponseEntity<FeedDTO> unlikeFeed(@PathVariable Long feedId, @RequestParam Long userId) {
+    public ResponseEntity<FeedDTO> unlikeFeed(@PathVariable("feedId") Long feedId, @RequestParam("userId") Long userId) {
         if (feedId == null || userId == null) return ResponseEntity.badRequest().build();
         FeedDTO updatedFeed = feedService.unlikeFeed(feedId, userId);
         return ResponseEntity.ok(updatedFeed);
@@ -218,16 +225,16 @@ public class FeedController {
     
     // 댓글 등록
     @PostMapping("/{feedId}/comments")
-    public ResponseEntity<CommentDTO> addComment(@PathVariable Long feedId,
-                                                 @RequestParam Long userId,
-                                                 @RequestParam String content) {
+    public ResponseEntity<CommentDTO> addComment(@PathVariable("feedId") Long feedId,
+                                                 @RequestParam("userId") Long userId,
+                                                 @RequestParam("content") String content) {
         CommentEntity comment = commentService.addComment(feedId, userId, content);
         return ResponseEntity.ok(convertToDTO(comment));
     }
     
     // 댓글 삭제
     @DeleteMapping("/{feedId}/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long feedId, @PathVariable Long commentId) {
+    public ResponseEntity<Void> deleteComment(@PathVariable("feedId") Long feedId, @PathVariable("commentId") Long commentId) {
         commentService.deleteComment(commentId);
         return ResponseEntity.noContent().build();
     }
@@ -235,9 +242,9 @@ public class FeedController {
     // 댓글 수정
     @PatchMapping("/{feedId}/comments/{commentId}")
     public ResponseEntity<CommentDTO> updateComment(
-            @PathVariable Long feedId,
-            @PathVariable Long commentId,
-            @RequestParam String content) {
+            @PathVariable("feedId") Long feedId,
+            @PathVariable("commentId") Long commentId,
+            @RequestParam("content") String content) {
 
         CommentEntity updated = commentService.updateComment(commentId, content);
         return ResponseEntity.ok(convertToDTO(updated));
@@ -245,7 +252,7 @@ public class FeedController {
     
     // 댓글 조회
     @GetMapping("/{feedId}/comments")
-    public ResponseEntity<List<CommentDTO>> getCommentsByFeedId(@PathVariable Long feedId) {
+    public ResponseEntity<List<CommentDTO>> getCommentsByFeedId(@PathVariable("feedId") Long feedId) {
         List<CommentEntity> comments = commentService.getCommentsByFeedId(feedId);
         List<CommentDTO> commentDTOs = comments.stream().map(this::convertToDTO).collect(Collectors.toList());
         return ResponseEntity.ok(commentDTOs);
@@ -253,7 +260,7 @@ public class FeedController {
     
     // 좋아요한 사용자 목록
     @GetMapping("/{feedId}/liked-users")
-    public ResponseEntity<List<UserDTO>> getLikedUsers(@PathVariable Long feedId) {
+    public ResponseEntity<List<UserDTO>> getLikedUsers(@PathVariable("feedId") Long feedId) {
         return ResponseEntity.ok(feedService.getLikedUsers(feedId));
     }
     

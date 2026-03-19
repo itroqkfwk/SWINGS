@@ -1,6 +1,5 @@
-// src/1_user/routes/AdminRoutes.jsx
 import { Routes, Route } from "react-router-dom";
-import PrivateRoute from "../components/PrivateRoute";
+import AdminRoute from "../components/AdminRoute";
 import AdminDashboard from "../pages/AdminDashboard";
 import AdminUserList from "../pages/AdminUserList";
 
@@ -10,17 +9,17 @@ export default function AdminRoutes() {
       <Route
         path=""
         element={
-          <PrivateRoute>
+          <AdminRoute>
             <AdminDashboard />
-          </PrivateRoute>
+          </AdminRoute>
         }
       />
       <Route
         path="users"
         element={
-          <PrivateRoute>
+          <AdminRoute>
             <AdminUserList />
-          </PrivateRoute>
+          </AdminRoute>
         }
       />
     </Routes>

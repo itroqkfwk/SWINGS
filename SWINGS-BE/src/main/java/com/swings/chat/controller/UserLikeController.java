@@ -25,9 +25,9 @@ public class UserLikeController {
     //  좋아요 요청 (무료 3회 + 이후 유료)
     @PostMapping("/{fromUserId}/{toUserId}")
     public ResponseEntity<String> sendLike(
-            @PathVariable String fromUserId,
-            @PathVariable String toUserId,
-            @RequestParam(required = false, defaultValue = "false") boolean paid
+            @PathVariable("fromUserId") String fromUserId,
+            @PathVariable("toUserId") String toUserId,
+            @RequestParam(name = "paid", required = false, defaultValue = "false") boolean paid
     ) {
         boolean canSendFreeLike = userLikeService.canSendLike(fromUserId);
 
@@ -50,7 +50,7 @@ public class UserLikeController {
 
     //  매칭 여부 확인
     @GetMapping("/match/{fromUserId}/{toUserId}")
-    public ResponseEntity<Boolean> checkMatch(@PathVariable String fromUserId, @PathVariable String toUserId) {
+    public ResponseEntity<Boolean> checkMatch(@PathVariable("fromUserId") String fromUserId, @PathVariable("toUserId") String toUserId) {
         boolean isMatched = userLikeService.isMatched(fromUserId, toUserId);
         return ResponseEntity.ok(isMatched);
     }
@@ -65,12 +65,12 @@ public class UserLikeController {
 
     //  받은 + 보낸 좋아요 통합 리스트
     @GetMapping("/all/{userId}")
-    public ResponseEntity<Map<String, List<SentLikeDTO>>> getAllLikes(@PathVariable String userId) {
+    public ResponseEntity<Map<String, List<SentLikeDTO>>> getAllLikes(@PathVariable("userId") String userId) {
         return ResponseEntity.ok(userLikeService.getSentAndReceivedLikes(userId));
     }
     //  남은 좋아요 수 조회 API
     @GetMapping("/count/{username}")
-    public ResponseEntity<Integer> getDailyLikeCount(@PathVariable String username) {
+    public ResponseEntity<Integer> getDailyLikeCount(@PathVariable("username") String username) {
         LocalDateTime todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT);
         int count = userLikeService.countTodayLikes(username, todayStart);
         int remaining = Math.max(0, 3 - count); // 하루 3개가 기본

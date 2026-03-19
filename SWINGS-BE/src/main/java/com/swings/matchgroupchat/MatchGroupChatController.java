@@ -2,6 +2,7 @@ package com.swings.matchgroupchat;
 
 import com.swings.chat.dto.ChatMessageDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/matchgroupchat")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.redis.enabled", havingValue = "true")
 public class MatchGroupChatController {
 
     private final RedisPublisher redisPublisher;

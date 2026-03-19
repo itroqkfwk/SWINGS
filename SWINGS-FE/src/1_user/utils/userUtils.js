@@ -1,4 +1,3 @@
-// src/1_user/utils/userUtils.js
 import { checkUsername } from "../api/userApi";
 
 export function saveToken(token) {
@@ -13,7 +12,6 @@ export function removeToken() {
   sessionStorage.removeItem("token");
 }
 
-// 이미지 base64 변환
 export const toBase64 = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -22,43 +20,42 @@ export const toBase64 = (file) =>
     reader.readAsDataURL(file);
   });
 
-// 객체 필드 비교
 export const getUpdatedFields = (original, edited) => {
   const updated = {};
+
   for (const key in edited) {
     if (edited[key] !== original[key]) {
       updated[key] = edited[key];
     }
   }
+
   return updated;
 };
 
-// 비밀번호 유효성 검사 및 일치 검사
 export const validatePasswordMatch = (pwd1, pwd2) => {
   if (pwd1 !== pwd2) {
-    return "비밀번호가 일치하지 않습니다";
+    return "비밀번호가 일치하지 않습니다.";
   }
 
-  if (pwd1.length < 3) {
-    return "최소 4자 이상이어야 합니다";
+  if (pwd1.length < 4) {
+    return "최소 4자 이상이어야 합니다.";
   }
 
   if (!/[a-z]/.test(pwd1)) {
-    return "소문자가 최소 1자 이상 포함되어야 합니다";
+    return "영문 소문자를 최소 1자 이상 포함해야 합니다.";
   }
 
   if (!/[0-9]/.test(pwd1)) {
-    return "숫자가 최소 1자 이상 포함되어야 합니다";
+    return "숫자를 최소 1자 이상 포함해야 합니다.";
   }
 
   if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]~`+=/]/.test(pwd1)) {
-    return "특수문자가 최소 1자 이상 포함되어야 합니다";
+    return "특수문자를 최소 1자 이상 포함해야 합니다.";
   }
 
   return null;
 };
 
-//날짜 형식
 export function formatKoreanDate(dateStr) {
   const date = new Date(dateStr);
   const year = date.getFullYear();
@@ -67,10 +64,8 @@ export function formatKoreanDate(dateStr) {
   const hours = String(date.getHours()).padStart(2, "0");
   const minutes = String(date.getMinutes()).padStart(2, "0");
 
-  return `${year}년${month}월${day}일${hours}시${minutes}분`;
+  return `${year}.${month}.${day} ${hours}:${minutes}`;
 }
-
-//회원가입 시 받을 formData 구조
 
 export const formDataPerStep = [
   {
@@ -86,39 +81,42 @@ export const formDataPerStep = [
   { golfSkill: "", introduce: "" },
 ];
 
-//현재 step에서 비어 있는 필드가 있는지 확인
-
 export const hasEmptyFields = (step, formData) => {
   const currentStepFields = Object.keys(formDataPerStep[step]);
-  return currentStepFields.some(
-    (field) => !formData[field] || formData[field].trim() === ""
-  );
+  return currentStepFields.some((field) => {
+    const value = formData[field];
+    return typeof value !== "string" || value.trim() === "";
+  });
 };
 
-//아이디 중복 확인
 export const handleUsernameCheckLogic = async (username, setMessage) => {
   if (!username) {
     setMessage("아이디를 입력해주세요.");
     return;
   }
-  const exists = await checkUsername(username);
-  setMessage(
-    exists ? "이미 사용 중인 아이디입니다." : "사용 가능한 아이디입니다."
-  );
+
+  try {
+    const exists = await checkUsername(username);
+    setMessage(
+      exists ? "이미 사용 중인 아이디입니다." : "사용 가능한 아이디입니다."
+    );
+  } catch {
+    setMessage("아이디 중복 확인 중 오류가 발생했습니다.");
+  }
 };
 
-//Google 로그인 상태로부터 초기값 설정
 export const prefillFromOAuthState = (location, formData, updateData) => {
   const state = location.state;
+
   if (state?.email && !formData.email) {
     updateData({ email: state.email });
   }
+
   if (state?.name && !formData.name) {
     updateData({ name: state.name });
   }
 };
 
-//회원가입 mbti, region 설정정
 export const mbtiOptions = [
   "ISTJ",
   "ISFJ",
@@ -158,7 +156,6 @@ export const regionOptions = [
   { label: "제주", value: "JEJU" },
 ];
 
-//회원가입 디자인인
 export const customSelectStyles = {
   container: (base) => ({
     ...base,
@@ -170,7 +167,7 @@ export const customSelectStyles = {
     paddingBottom: "2px",
     paddingLeft: "12px",
     paddingRight: "12px",
-    borderColor: "#D1D5DB", // Tailwind border-gray-300
+    borderColor: "#D1D5DB",
     borderRadius: "0.5rem",
     minHeight: "42px",
     boxShadow: "none",

@@ -1,0 +1,160 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.springframework.boot",
+    "module": "spring-boot-actuator-autoconfigure",
+    "version": "3.4.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.12.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-actuator",
+          "version": {
+            "requires": "3.4.3"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot",
+          "version": {
+            "requires": "3.4.3"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-autoconfigure",
+          "version": {
+            "requires": "3.4.3"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "spring-boot-actuator-autoconfigure-3.4.3.jar",
+          "url": "spring-boot-actuator-autoconfigure-3.4.3.jar",
+          "size": 823854,
+          "sha512": "cdaa4af741dc0ae7fb6d805b37cebe6d01cf7197eea21cb3bd1a5beb8243be3864b8ae21feb67413697bc24635eb625808d76543c2deed5f49e01c8586060b5a",
+          "sha256": "efbf4144bd2192dbdfed704465f2766aaa0972319888591eb92b0666b687625a",
+          "sha1": "7687349974634acfe2bd65d31dd77ce739a29e62",
+          "md5": "e22f6e21c9ba64d4cd426fecd22d491b"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.fasterxml.jackson.core",
+          "module": "jackson-databind",
+          "version": {
+            "requires": "2.18.2"
+          }
+        },
+        {
+          "group": "com.fasterxml.jackson.datatype",
+          "module": "jackson-datatype-jsr310",
+          "version": {
+            "requires": "2.18.2"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-actuator",
+          "version": {
+            "requires": "3.4.3"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot",
+          "version": {
+            "requires": "3.4.3"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-autoconfigure",
+          "version": {
+            "requires": "3.4.3"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "spring-boot-actuator-autoconfigure-3.4.3.jar",
+          "url": "spring-boot-actuator-autoconfigure-3.4.3.jar",
+          "size": 823854,
+          "sha512": "cdaa4af741dc0ae7fb6d805b37cebe6d01cf7197eea21cb3bd1a5beb8243be3864b8ae21feb67413697bc24635eb625808d76543c2deed5f49e01c8586060b5a",
+          "sha256": "efbf4144bd2192dbdfed704465f2766aaa0972319888591eb92b0666b687625a",
+          "sha1": "7687349974634acfe2bd65d31dd77ce739a29e62",
+          "md5": "e22f6e21c9ba64d4cd426fecd22d491b"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "spring-boot-actuator-autoconfigure-3.4.3-javadoc.jar",
+          "url": "spring-boot-actuator-autoconfigure-3.4.3-javadoc.jar",
+          "size": 1430011,
+          "sha512": "fc96ec06b8c4433c56c27db84279081ae8507171ea5d452af827a27d9e7b92c87298a3413aa1f8a5a85d5d770f27e45203d0d0fe6fa40c9c288fd16cc17323cd",
+          "sha256": "d4ef12200d5e74cb7f3107c8201b09af4b033fbf5ac5b119693ef349df345f93",
+          "sha1": "e0b1125258ed5d646187adb5233474c6f38542db",
+          "md5": "0c722d8283c2fbf344731f7e72bf5c8c"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "spring-boot-actuator-autoconfigure-3.4.3-sources.jar",
+          "url": "spring-boot-actuator-autoconfigure-3.4.3-sources.jar",
+          "size": 573378,
+          "sha512": "2d60fa460e27317f2fd87f3ad37dd7efc33d0144f5e699398c3ae1e2226a8c425173461689adda9829c3e2823425b22dfb83fee4539e033b6311d7d92bd37094",
+          "sha256": "15ccc762f88faacec10ce821212b4134c821b20dc924abb554dc9a26c8ae022f",
+          "sha1": "658586b33d62b9a3b2bacde6c9f1923a08eec36d",
+          "md5": "7cc6e7bbec58bfcea4f22a60d2cffc34"
+        }
+      ]
+    }
+  ]
+}

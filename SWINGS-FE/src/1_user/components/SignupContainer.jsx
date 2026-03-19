@@ -61,6 +61,11 @@ export default function SignupContainer() {
   const prevStep = () => setStep((prev) => prev - 1);
 
   const handleSubmit = async () => {
+    if (hasEmptyFields(step, formData)) {
+      setError("모든 항목을 입력해주세요.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 

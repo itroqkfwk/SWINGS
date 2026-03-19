@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { fetchUserData, updateUserInfo, checkUsername } from "../api/userApi";
-import { useNavigate } from "react-router-dom";
-import { removeToken } from "../utils/userUtils";
 import Select from "react-select";
 import { Dialog } from "@headlessui/react";
+import { useNavigate } from "react-router-dom";
+import { checkUsername, fetchUserData, updateUserInfo } from "../api/userApi";
+import { removeToken } from "../utils/userUtils";
 
 const regionMap = {
   서울: "SEOUL",
@@ -25,10 +25,11 @@ const regionMap = {
   제주: "JEJU",
 };
 
-const regionOptions = Object.keys(regionMap).map((k) => ({
-  label: k,
-  value: k,
+const regionOptions = Object.keys(regionMap).map((label) => ({
+  label,
+  value: label,
 }));
+
 const mbtiOptions = [
   "ISTJ",
   "ISFJ",
@@ -46,16 +47,14 @@ const mbtiOptions = [
   "ESFJ",
   "ENFJ",
   "ENTJ",
-].map((v) => ({ label: v, value: v }));
-const genderOptions = [
-  { label: "남성", value: "male" },
-  { label: "여성", value: "female" },
-];
+].map((value) => ({ label: value, value }));
+
 const golfSkillOptions = [
   { label: "초급", value: "beginner" },
   { label: "중급", value: "intermediate" },
   { label: "고급", value: "advanced" },
 ];
+
 const religionOptions = [
   { label: "무교", value: "none" },
   { label: "기독교", value: "christian" },
@@ -63,43 +62,51 @@ const religionOptions = [
   { label: "불교", value: "buddhist" },
   { label: "기타", value: "etc" },
 ];
+
 const yesNoOptions = [
-  { label: "흡연함", value: "yes" },
-  { label: "흡연하지 않음", value: "no" },
+  { label: "예", value: "yes" },
+  { label: "아니오", value: "no" },
 ];
+
 const drinkOptions = [
-  { label: "음주함", value: "yes" },
-  { label: "음주하지 않음", value: "no" },
+  { label: "마심", value: "yes" },
+  { label: "마시지 않음", value: "no" },
 ];
 
 const selectStyles = {
+  control: (base, state) => ({
+    ...base,
+    minHeight: "44px",
+    borderRadius: "0.75rem",
+    borderColor: state.isFocused ? "#fb7185" : "#d1d5db",
+    boxShadow: "none",
+    paddingLeft: "0.25rem",
+    ":hover": {
+      borderColor: "#fb7185",
+    },
+  }),
   menu: (base) => ({
     ...base,
-    maxHeight: "150px",
-    overflowY: "auto",
-    color: "#000",
+    zIndex: 20,
+    borderRadius: "0.75rem",
+    overflow: "hidden",
   }),
-  control: (base) => ({
-    ...base,
-    borderColor: "#CBD5E0",
-    borderRadius: "0.5rem",
-    padding: "0.25rem 0.5rem",
-    fontSize: "0.875rem",
-  }),
+};
+
+const initialModal = {
+  open: false,
+  success: true,
+  message: "",
+  logout: false,
 };
 
 export default function UpdateForm() {
   const [formData, setFormData] = useState(null);
   const [originalData, setOriginalData] = useState(null);
-  const [modal, setModal] = useState({
-    open: false,
-    success: true,
-    message: "",
-    logout: false,
-  });
+  const [modal, setModal] = useState(initialModal);
   const [loading, setLoading] = useState(true);
   const [usernameChecked, setUsernameChecked] = useState(true);
-  const [usernameMsg, setUsernameMsg] = useState("");
+  const [usernameMessage, setUsernameMessage] = useState("");
   const [logoutPending, setLogoutPending] = useState(false);
   const navigate = useNavigate();
 
@@ -107,90 +114,116 @@ export default function UpdateForm() {
     const loadUser = async () => {
       try {
         const data = await fetchUserData();
-        const regionKor = Object.keys(regionMap).find(
-          (k) => regionMap[k] === data.activityRegion
+        const regionLabel = Object.keys(regionMap).find(
+          (label) => regionMap[label] === data.activityRegion
         );
-        setFormData({ ...data, activityRegion: regionKor || "" });
-        setOriginalData({ ...data, activityRegion: regionKor || "" });
+
+        const normalizedData = {
+          ...data,
+          activityRegion: regionLabel || "",
+        };
+
+        setFormData(normalizedData);
+        setOriginalData(normalizedData);
       } catch {
         setModal({
           open: true,
           success: false,
-          message: "사용자 정보를 불러올 수 없습니다.",
+          message: "사용자 정보를 불러오지 못했습니다.",
+          logout: false,
         });
       } finally {
         setLoading(false);
       }
     };
+
     loadUser();
   }, []);
 
-  // ✅ 로그아웃 후 강제 이동 (토큰 제거 + 새로고침 포함)
   useEffect(() => {
-    if (logoutPending) {
-      removeToken();
-      window.location.href = "/swings";
-    }
-  }, [logoutPending]);
-
-  const handleUsernameCheck = async () => {
-    if (!formData?.username) return;
-    if (formData.username === originalData.username) {
-      setUsernameChecked(true);
-      setUsernameMsg("현재 사용 중인 아이디입니다.");
+    if (!logoutPending) {
       return;
     }
+
+    removeToken();
+    window.location.href = "/swings";
+  }, [logoutPending]);
+
+  const updateField = (key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleUsernameCheck = async () => {
+    if (!formData?.username) {
+      return;
+    }
+
+    if (formData.username === originalData.username) {
+      setUsernameChecked(true);
+      setUsernameMessage("현재 사용 중인 아이디입니다.");
+      return;
+    }
+
     try {
       const exists = await checkUsername(formData.username);
       setUsernameChecked(!exists);
-      setUsernameMsg(
-        exists ? "이미 사용 중인 아이디입니다." : "사용 가능한 아이디입니다."
+      setUsernameMessage(
+        exists
+          ? "이미 사용 중인 아이디입니다."
+          : "사용 가능한 아이디입니다."
       );
     } catch {
-      setUsernameMsg("중복 확인 중 오류 발생");
       setUsernameChecked(false);
+      setUsernameMessage("아이디 중복 확인 중 오류가 발생했습니다.");
     }
   };
 
   const handleUpdate = async () => {
-    if (!formData || !formData.username)
-      return setModal({
+    if (!formData?.username) {
+      setModal({
         open: true,
         success: false,
         message: "사용자 정보가 없습니다.",
+        logout: false,
       });
+      return;
+    }
 
-    if (formData.username !== originalData.username && !usernameChecked)
-      return setModal({
+    if (formData.username !== originalData.username && !usernameChecked) {
+      setModal({
         open: true,
         success: false,
         message: "아이디 중복 확인이 필요합니다.",
+        logout: false,
       });
+      return;
+    }
 
     const updatedFields = {};
-    for (const key in formData) {
+
+    Object.keys(formData).forEach((key) => {
       if (formData[key] !== originalData[key] && formData[key] !== undefined) {
         updatedFields[key] = formData[key];
       }
-    }
+    });
 
-    if (
-      updatedFields.activityRegion &&
-      regionMap[updatedFields.activityRegion]
-    ) {
+    if (updatedFields.activityRegion) {
       updatedFields.activityRegion = regionMap[updatedFields.activityRegion];
     }
 
     if (Object.keys(updatedFields).length === 0) {
-      return setModal({
+      setModal({
         open: true,
         success: false,
         message: "변경된 항목이 없습니다.",
+        logout: false,
       });
+      return;
     }
 
     try {
       await updateUserInfo(originalData.username, updatedFields);
+
       if (updatedFields.username) {
         setModal({
           open: true,
@@ -198,154 +231,177 @@ export default function UpdateForm() {
           message: "아이디가 변경되어 다시 로그인해야 합니다.",
           logout: true,
         });
-      } else {
-        setModal({
-          open: true,
-          success: true,
-          message: "회원정보가 성공적으로 수정되었습니다!",
-          logout: false,
-        });
-        setOriginalData({ ...formData });
+        return;
       }
-    } catch (err) {
+
+      setOriginalData({ ...formData });
+      setModal({
+        open: true,
+        success: true,
+        message: "회원 정보가 정상적으로 수정되었습니다.",
+        logout: false,
+      });
+    } catch {
       setModal({
         open: true,
         success: false,
-        message: "수정 중 오류가 발생했습니다.",
+        message: "회원 정보 수정 중 오류가 발생했습니다.",
         logout: false,
       });
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        로딩 중...
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-gray-500">
+        정보를 불러오는 중입니다...
       </div>
     );
-  if (!formData) return null;
+  }
+
+  if (!formData) {
+    return null;
+  }
 
   return (
-    <div className="relative min-h-screen bg-white flex flex-col items-center justify-center px-4">
-      <br />
-      <div className="w-full max-w-sm space-y-6">
-        {/* 아이디 필드 */}
+    <div className="mx-auto w-full max-w-xl px-5 pb-24 pt-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">회원 정보 수정</h1>
+        <p className="mt-2 text-sm text-gray-500">
+          필요한 정보만 수정하고 저장하세요.
+        </p>
+      </div>
+
+      <div className="space-y-5 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1">
+          <label className="mb-2 block text-sm font-semibold text-gray-700">
             아이디
           </label>
           <div className="flex gap-2">
             <input
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-black"
+              className="h-11 flex-1 rounded-xl border border-gray-300 px-4 text-sm text-gray-900 outline-none transition focus:border-rose-400"
               value={formData.username || ""}
-              onChange={(e) => {
-                setFormData({ ...formData, username: e.target.value });
+              onChange={(event) => {
+                updateField("username", event.target.value);
                 setUsernameChecked(false);
-                setUsernameMsg("");
+                setUsernameMessage("");
               }}
-              placeholder="아이디 입력"
+              placeholder="아이디를 입력하세요"
             />
             <button
+              type="button"
               onClick={handleUsernameCheck}
-              className="bg-custom-pink font-bold text-white px-3 py-1 rounded-2xl text-sm"
+              className="rounded-xl bg-custom-pink px-4 text-sm font-bold text-white"
             >
               중복 확인
             </button>
           </div>
-          {usernameMsg && (
+          {usernameMessage && (
             <p
-              className={`text-sm mt-1 ${
+              className={`mt-2 text-sm ${
                 usernameChecked ? "text-green-600" : "text-red-500"
               }`}
             >
-              {usernameMsg}
+              {usernameMessage}
             </p>
           )}
         </div>
-
-        {/* 필드들 */}
 
         <InputField
           label="생년월일"
           type="date"
           value={formData.birthDate}
-          onChange={(v) => setFormData({ ...formData, birthDate: v })}
+          onChange={(value) => updateField("birthDate", value)}
         />
 
         <InputField
           label="직업"
           value={formData.job}
-          onChange={(v) => setFormData({ ...formData, job: v })}
+          onChange={(value) => updateField("job", value)}
+          placeholder="직업을 입력하세요"
         />
+
         <LabeledSelect
           label="골프 실력"
           options={golfSkillOptions}
           value={formData.golfSkill}
-          onChange={(v) => setFormData({ ...formData, golfSkill: v })}
+          onChange={(value) => updateField("golfSkill", value)}
         />
+
         <LabeledSelect
           label="MBTI"
           options={mbtiOptions}
           value={formData.mbti}
-          onChange={(v) => setFormData({ ...formData, mbti: v })}
+          onChange={(value) => updateField("mbti", value)}
         />
+
         <InputField
           label="취미"
           value={formData.hobbies}
-          onChange={(v) => setFormData({ ...formData, hobbies: v })}
+          onChange={(value) => updateField("hobbies", value)}
+          placeholder="취미를 입력하세요"
         />
+
         <LabeledSelect
           label="활동 지역"
           options={regionOptions}
           value={formData.activityRegion}
-          onChange={(v) => setFormData({ ...formData, activityRegion: v })}
+          onChange={(value) => updateField("activityRegion", value)}
         />
+
         <LabeledSelect
           label="종교"
           options={religionOptions}
           value={formData.religion}
-          onChange={(v) => setFormData({ ...formData, religion: v })}
+          onChange={(value) => updateField("religion", value)}
         />
+
         <LabeledSelect
           label="흡연 여부"
           options={yesNoOptions}
           value={formData.smoking}
-          onChange={(v) => setFormData({ ...formData, smoking: v })}
+          onChange={(value) => updateField("smoking", value)}
         />
+
         <LabeledSelect
           label="음주 여부"
           options={drinkOptions}
           value={formData.drinking}
-          onChange={(v) => setFormData({ ...formData, drinking: v })}
+          onChange={(value) => updateField("drinking", value)}
         />
 
-        <div className="flex gap-2">
+        <div className="flex gap-3 pt-2">
           <button
+            type="button"
             onClick={() => navigate("/swings/mypage")}
-            className="flex-1 bg-gray-200 text-gray-800 font-bold py-2 rounded-xl mt-2"
+            className="flex-1 rounded-xl bg-gray-100 py-3 text-sm font-semibold text-gray-700"
           >
             취소
           </button>
           <button
+            type="button"
             onClick={handleUpdate}
-            className="flex-1 bg-custom-pink font-bold text-white py-2 rounded-xl mt-2"
+            className="flex-1 rounded-xl bg-custom-pink py-3 text-sm font-bold text-white"
           >
-            수정 완료
+            저장하기
           </button>
         </div>
-        <br />
       </div>
 
       <ResultModal
         modal={modal}
         onClose={() => {
           if (modal.success && modal.logout) {
-            setLogoutPending(true); // ✅ logout 플래그를 통해 useEffect에서 로그아웃 처리
-          } else if (modal.success) {
-            navigate("/swings/mypage");
-          } else {
-            setModal({ ...modal, open: false });
+            setLogoutPending(true);
+            return;
           }
+
+          if (modal.success) {
+            navigate("/swings/mypage");
+            return;
+          }
+
+          setModal((prev) => ({ ...prev, open: false }));
         }}
       />
     </div>
@@ -361,14 +417,14 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-600 mb-1">
+      <label className="mb-2 block text-sm font-semibold text-gray-700">
         {label}
       </label>
       <input
         type={type}
-        className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black text-sm"
+        className="h-11 w-full rounded-xl border border-gray-300 px-4 text-sm text-gray-900 outline-none transition focus:border-rose-400"
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
       />
     </div>
@@ -378,15 +434,15 @@ function InputField({
 function LabeledSelect({ label, options, value, onChange }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-600 mb-1">
+      <label className="mb-2 block text-sm font-semibold text-gray-700">
         {label}
       </label>
       <Select
         options={options}
-        value={options.find((opt) => opt.value === value)}
-        onChange={(selected) => onChange(selected.value)}
+        value={options.find((option) => option.value === value) || null}
+        onChange={(selected) => onChange(selected?.value || "")}
         styles={selectStyles}
-        placeholder="선택"
+        placeholder="선택하세요"
       />
     </div>
   );
@@ -397,20 +453,21 @@ function ResultModal({ modal, onClose }) {
     <Dialog open={modal.open} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
       <div className="fixed inset-0 flex items-center justify-center px-4">
-        <Dialog.Panel className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm text-center space-y-4">
+        <Dialog.Panel className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
           <Dialog.Title
-            className={`text-lg font-semibold ${
+            className={`text-lg font-bold ${
               modal.success ? "text-green-600" : "text-red-500"
             }`}
           >
-            {modal.success ? " " : "❌ 실패"}
+            {modal.success ? "완료" : "오류"}
           </Dialog.Title>
-          <p className="text-gray-700 text-sm whitespace-pre-line font-bold">
+          <p className="mt-3 whitespace-pre-line text-sm font-medium text-gray-700">
             {modal.message}
           </p>
           <button
+            type="button"
             onClick={onClose}
-            className="bg-custom-pink text-white px-4 py-2 rounded-xl font-bold"
+            className="mt-5 rounded-xl bg-custom-pink px-5 py-2 text-sm font-bold text-white"
           >
             확인
           </button>

@@ -5,6 +5,7 @@ import SockJS from "sockjs-client";
 import axios from "../../1_user/api/axiosInstance";
 import { fetchChatMessages } from "../api/chatRoomApi";
 import { fetchUserData } from "../../1_user/api/userApi";
+import { WS_BASE_URL } from "../../config/runtime";
 import { MoreVertical } from "lucide-react";
 import ConfirmModal from "../components/ConfirmModal";
 import { IoIosArrowBack } from "react-icons/io";
@@ -50,7 +51,7 @@ const ChatRoomPage = () => {
     loadData();
 
     const client = new Client({
-      webSocketFactory: () => new SockJS("http://localhost:8090/swings/ws"),
+      webSocketFactory: () => new SockJS(WS_BASE_URL),
       reconnectDelay: 5000,
     });
 

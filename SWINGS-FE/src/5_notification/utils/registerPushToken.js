@@ -1,30 +1,45 @@
 import { getToken } from "firebase/messaging";
 import axiosInstance from "../../1_user/api/axiosInstance.js";
-import {messaging} from "../../utils/firebase.js";
+import { isFirebaseConfigured, messagingPromise } from "../../utils/firebase.js";
 
 export const registerPushToken = async (username) => {
-    console.log("🔥 registerPushToken 호출됨 - 사용자:", username);
-    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+  console.log("registerPushToken called for user:", username);
 
-    try {
-        const token = await getToken(messaging, {
-            vapidKey,
-            serviceWorkerRegistration: await navigator.serviceWorker.register("/sw.js"),
-        });
+  if (!isFirebaseConfigured) {
+    console.warn("Firebase config is incomplete. Skipping push token registration.");
+    return;
+  }
 
-        console.log("✅ getToken 결과:", token);
+  const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+  if (!vapidKey) {
+    console.warn("Firebase VAPID key is missing. Skipping push token registration.");
+    return;
+  }
 
-        if (token) {
-            await axiosInstance.post(
-                `/fcm/register-token?username=${username}`,
-                token,
-                { headers: { "Content-Type": "text/plain" } }
-            );
-            console.log("✅ FCM 푸시 토큰 서버 전송 완료");
-        } else {
-            console.warn("⚠️ 푸시 토큰 없음 (권한 거부)");
-        }
-    } catch (err) {
-        console.error("❌ FCM 토큰 전송 실패:", err);
+  try {
+    const messaging = await messagingPromise;
+    if (!messaging) {
+      console.warn("Firebase messaging is unavailable. Skipping push token registration.");
+      return;
     }
+
+    const registration = await navigator.serviceWorker.register("/sw.js");
+    const token = await getToken(messaging, {
+      vapidKey,
+      serviceWorkerRegistration: registration,
+    });
+
+    if (!token) {
+      console.warn("Push token was not issued.");
+      return;
+    }
+
+    await axiosInstance.post(
+      `/fcm/register-token?username=${username}`,
+      token,
+      { headers: { "Content-Type": "text/plain" } }
+    );
+  } catch (error) {
+    console.error("Push token registration failed:", error);
+  }
 };
