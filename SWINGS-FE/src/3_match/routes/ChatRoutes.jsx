@@ -1,23 +1,24 @@
-// ChatRoutes.jsx
-import React from "react";
-import { Routes, Route } from "react-router-dom";
-import ChatListPage from "../pages/ChatListPage";
-import ChatRoomPage from "../pages/ChatRoomPage";
-import LikeListPage from "../pages/LikeListPage";
+import { Suspense, lazy } from "react";
+import { Route, Routes } from "react-router-dom";
 
-/**
- * ChatRoutes
- * App.jsx의 <Route path="/swings/chat/*" /> 아래에 들어가는 내부 라우트 정의
- */
-const ChatRoutes = () => {
-    return (
-        <Routes>
-            <Route path="" element={<ChatListPage />} /> {/* /swings/chat */}
-            <Route path=":roomId" element={<ChatRoomPage />} /> {/* /swings/chat/:roomId */}
-            <Route path="likes/:userId" element={<LikeListPage />} />
+const ChatListPage = lazy(() => import("../pages/ChatListPage"));
+const ChatRoomPage = lazy(() => import("../pages/ChatRoomPage"));
+const LikeListPage = lazy(() => import("../pages/LikeListPage"));
 
-        </Routes>
-    );
-};
+const RouteFallback = () => (
+  <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-500">
+    채팅 페이지를 불러오는 중입니다...
+  </div>
+);
+
+const ChatRoutes = () => (
+  <Suspense fallback={<RouteFallback />}>
+    <Routes>
+      <Route path="" element={<ChatListPage />} />
+      <Route path=":roomId" element={<ChatRoomPage />} />
+      <Route path="likes/:userId" element={<LikeListPage />} />
+    </Routes>
+  </Suspense>
+);
 
 export default ChatRoutes;

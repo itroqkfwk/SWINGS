@@ -1,18 +1,20 @@
-// MatchRoutes.jsx
+import { Suspense, lazy } from "react";
+import { Route, Routes } from "react-router-dom";
 
-import React from "react";
-import { Route ,Routes} from "react-router-dom";
-import SwipePage from "../pages/SwipePage";
-/**
- * MatchRoutes
- * App.jsx의 <Routes> 안에서 사용할 <Route> 요소만 리턴합니다.
- */
-const MatchRoutes = () => (
-    <Routes>
-        <Route path="" element={<SwipePage />} />                // → /swings/match
+const SwipePage = lazy(() => import("../pages/SwipePage"));
 
-    </Routes>
+const RouteFallback = () => (
+  <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-500">
+    소개팅 페이지를 불러오는 중입니다...
+  </div>
 );
 
+const MatchRoutes = () => (
+  <Suspense fallback={<RouteFallback />}>
+    <Routes>
+      <Route path="" element={<SwipePage />} />
+    </Routes>
+  </Suspense>
+);
 
 export default MatchRoutes;

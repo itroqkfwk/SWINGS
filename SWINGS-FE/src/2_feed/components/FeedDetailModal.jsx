@@ -1,31 +1,44 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  FaCheck,
+  FaComment,
+  FaEdit,
+  FaEllipsisV,
+  FaHeart,
+  FaImage,
+  FaPaperPlane,
+  FaRegHeart,
   FaTimes,
   FaTrash,
-  FaPaperPlane,
   FaUser,
-  FaHeart,
-  FaRegHeart,
-  FaComment,
-  FaEllipsisV,
-  FaEdit,
-  FaCheck,
-  FaImage,
 } from "react-icons/fa";
-import LikedUsersModal from "./LikedUsersModal";
 import feedApi from "../api/feedApi";
-import DeleteConfirmModal from "./DeleteConfirmModal";
-import { normalizeImageUrl } from "../utils/imageUtils";
 import socialApi from "../api/socialApi";
 import { processFeed } from "../utils/feedUtils";
+import { normalizeImageUrl } from "../utils/imageUtils";
 import ImageModal from "./ImageModal";
+
+const CAPTION_COLLAPSE_LENGTH = 220;
+const COMMENT_COLLAPSE_LENGTH = 140;
+
+const formatTimeAgo = (dateString) => {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMinutes = Math.max(0, Math.floor((now - date) / (1000 * 60)));
+
+  if (diffMinutes < 1) return "방금 전";
+  if (diffMinutes < 60) return `${diffMinutes}분 전`;
+  if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)}시간 전`;
+  return `${Math.floor(diffMinutes / 1440)}일 전`;
+};
 
 const FeedDetailModal = ({
   feed,
   currentUser,
   onClose,
   onLikeToggle,
-  onDelete,
   onRequestDelete,
   onShowLikedBy,
   onCommentSubmit,
@@ -33,705 +46,679 @@ const FeedDetailModal = ({
   setSelectedFeed,
   updateFeedInState,
 }) => {
-  // 상태값 정의
-  const [newComment, setNewComment] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [showLikedByModal, setShowLikedByModal] = useState(false);
-  const [likedByUsers, setLikedByUsers] = useState([]);
+  const modalRef = useRef(null);
+  const commentsRef = useRef(null);
+
+  const [localFeed, setLocalFeed] = useState(processFeed(feed));
   const [authorProfile, setAuthorProfile] = useState(null);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [expandedCaption, setExpandedCaption] = useState(false);
   const [expandedCommentIds, setExpandedCommentIds] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editedComment, setEditedComment] = useState("");
+  const [activeCommentMenuId, setActiveCommentMenuId] = useState(null);
+  const [showPostMenu, setShowPostMenu] = useState(false);
   const [isEditingPost, setIsEditingPost] = useState(false);
-  const [editedCaption, setEditedCaption] = useState(feed.caption || "");
+  const [editedCaption, setEditedCaption] = useState(feed?.caption || "");
   const [editedFile, setEditedFile] = useState(null);
-  const [showPostDropdown, setShowPostDropdown] = useState(false);
-  const [isCaptionLong, setIsCaptionLong] = useState(false);
+  const [imagePreview, setImagePreview] = useState(
+    feed?.image || feed?.imageUrl
+      ? normalizeImageUrl(feed.image || feed.imageUrl)
+      : null
+  );
 
-  const modalRef = useRef(null);
-  const commentInputRef = useRef(null);
-  const commentsContainerRef = useRef(null);
-  const captionRef = useRef(null);
-  const [localFeed, setLocalFeed] = useState(processFeed(feed));
+  useEffect(() => {
+    setLocalFeed(processFeed(feed));
+    setEditedCaption(feed?.caption || "");
+    setEditedFile(null);
+    setImagePreview(
+      feed?.image || feed?.imageUrl
+        ? normalizeImageUrl(feed.image || feed.imageUrl)
+        : null
+    );
+  }, [feed]);
 
-  // 작성자 정보 불러오기
   useEffect(() => {
     const fetchAuthor = async () => {
-      if (feed?.userId) {
-        try {
-          const profile = await socialApi.getProfile(feed.userId);
-          setAuthorProfile(profile);
-        } catch (err) {
-          console.error("작성자 프로필 로딩 실패", err);
-        }
+      if (!feed?.userId) return;
+
+      try {
+        const profile = await socialApi.getProfile(feed.userId);
+        setAuthorProfile(profile);
+      } catch (error) {
+        console.error("작성자 프로필 로딩 실패:", error);
       }
     };
+
     fetchAuthor();
   }, [feed?.userId]);
 
-  // 캡션 줄 수 판단
   useEffect(() => {
-    if (captionRef.current) {
-      const lineHeight = parseInt(
-        getComputedStyle(captionRef.current).lineHeight
-      );
-      const captionHeight = captionRef.current.scrollHeight;
-      const lines = captionHeight / lineHeight;
-      setIsCaptionLong(lines > 10);
-    }
-  }, [feed?.caption]);
-
-  // 외부 클릭 또는 ESC키로 닫기
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      const isOutsideModal =
-        modalRef.current && !modalRef.current.contains(event.target);
-      const isOutsideLikedUsersModal =
-        !event.target.closest(".liked-users-modal");
-
-      if (isOutsideModal && isOutsideLikedUsersModal) {
+    const handleMouseDown = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
         onClose();
       }
     };
 
-    const handleKeyDown = (event) => {
+    const handleEscape = (event) => {
       if (event.key === "Escape") {
-        if (showLikedByModal) setShowLikedByModal(false);
-        else onClose();
+        if (selectedImage) {
+          setSelectedImage(null);
+          return;
+        }
+
+        onClose();
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("keydown", handleEscape);
     document.body.style.overflow = "hidden";
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "auto";
     };
-  }, [onClose, showLikedByModal]);
+  }, [onClose, selectedImage]);
 
-  // 댓글 영역 자동 스크롤
   useEffect(() => {
-    if (commentsContainerRef.current) {
-      commentsContainerRef.current.scrollTop =
-        commentsContainerRef.current.scrollHeight;
-    }
-  }, [feed?.comments?.length]);
+    if (!commentsRef.current) return;
+    commentsRef.current.scrollTop = commentsRef.current.scrollHeight;
+  }, [localFeed?.comments?.length]);
 
-  // 피드 상태 초기화 및 정렬
-  useEffect(() => {
-    if (feed) {
-      const processed = processFeed(feed);
+  const sortedComments = useMemo(
+    () =>
+      [...(localFeed?.comments || [])].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      ),
+    [localFeed?.comments]
+  );
 
-      processed.comments = processed.comments
-        .map((c) => ({
-          ...c,
-          userProfilePic: c.userProfilePic ?? null,
-        }))
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  if (!feed) return null;
 
-      setLocalFeed(processed);
-    }
-  }, [feed]);
+  const currentUserId = currentUser?.userId?.toString();
+  const postOwnerId = localFeed?.userId?.toString();
+  const canManagePost = currentUserId && currentUserId === postOwnerId;
+  const hasImage = Boolean(localFeed?.image || localFeed?.imageUrl);
+  const normalizedImageUrl = hasImage
+    ? normalizeImageUrl(localFeed.image || localFeed.imageUrl)
+    : null;
+  const isCaptionLong =
+    (localFeed?.caption || "").length > CAPTION_COLLAPSE_LENGTH;
 
-  // 좋아요 처리
-  const handleLikeToggle = async () => {
-    if (!currentUser || !localFeed) return;
+  const handleLikeClick = async () => {
+    if (!localFeed) return;
+
     const nextLiked = !localFeed.liked;
-    const updatedFeed = {
+    const optimisticFeed = {
       ...localFeed,
       liked: nextLiked,
-      likes: nextLiked ? localFeed.likes + 1 : localFeed.likes - 1,
+      likes: nextLiked ? (localFeed.likes || 0) + 1 : localFeed.likes - 1,
     };
-    setLocalFeed(updatedFeed);
+
+    setLocalFeed(optimisticFeed);
+
     try {
-      const result = await onLikeToggle?.(localFeed.feedId, localFeed.liked);
-      if (result) {
-        setLocalFeed((prev) => ({ ...prev, ...result }));
+      const updatedFeed = await onLikeToggle?.(localFeed.feedId, localFeed.liked);
+      if (updatedFeed) {
+        const processedFeed = processFeed(updatedFeed);
+        setLocalFeed(processedFeed);
+        setSelectedFeed(processedFeed);
+        updateFeedInState?.(processedFeed);
       }
-    } catch (err) {
-      console.error("좋아요 처리 실패:", err);
-      setLocalFeed(feed);
+    } catch (error) {
+      console.error("좋아요 처리 실패:", error);
+      setLocalFeed(processFeed(feed));
     }
   };
 
-  // 게시물 수정 제출
-  const handlePostEditSubmit = async () => {
-    const formData = new FormData();
-    formData.append("caption", editedCaption);
-    if (editedFile) formData.append("file", editedFile);
+  const handlePostUpdate = async (event) => {
+    event.preventDefault();
 
     try {
-      const updated = await feedApi.updateFeed(feed.feedId, {
+      const updatedFeed = await feedApi.updateFeed(localFeed.feedId, {
         caption: editedCaption,
         file: editedFile,
       });
 
-      setLocalFeed((prev) => ({ ...prev, ...updated }));
-
-      updateFeedInState?.(updated);
-      setSelectedFeed(processFeed(updated));
+      const processedFeed = processFeed(updatedFeed);
+      setLocalFeed(processedFeed);
+      setSelectedFeed(processedFeed);
+      updateFeedInState?.(processedFeed);
       setIsEditingPost(false);
-      setShowPostDropdown(false);
-    } catch (err) {
-      console.error("게시물 수정 실패:", err);
+      setShowPostMenu(false);
+    } catch (error) {
+      console.error("게시글 수정 실패:", error);
     }
   };
 
-  const handleShowLikedBy = async (feedId) => {
+  const handleLocalCommentSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!newComment.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+
     try {
-      const users = await feedApi.getLikedUsers(feedId);
-      setLikedByUsers(users);
-      setShowLikedByModal(true);
-    } catch (err) {
-      console.error("❌ 좋아요 목록 불러오기 실패:", err);
+      const createdComment = await onCommentSubmit?.(localFeed.feedId, newComment);
+      const nextComment = {
+        ...createdComment,
+        username: createdComment?.username ?? currentUser?.username ?? "익명",
+        userProfilePic:
+          createdComment?.userProfilePic ?? currentUser?.userImg ?? null,
+      };
+
+      const updatedFeed = processFeed({
+        ...localFeed,
+        comments: [...(localFeed.comments || []), nextComment],
+      });
+
+      setLocalFeed(updatedFeed);
+      setSelectedFeed(updatedFeed);
+      updateFeedInState?.(updatedFeed);
+      setNewComment("");
+    } catch (error) {
+      console.error("댓글 작성 실패:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // 댓글 확장/축소
+  const handleCommentUpdate = async (commentId) => {
+    if (!editedComment.trim()) return;
+
+    try {
+      const updatedComment = await feedApi.updateComment(
+        localFeed.feedId,
+        commentId,
+        editedComment
+      );
+
+      const updatedFeed = processFeed({
+        ...localFeed,
+        comments: (localFeed.comments || []).map((comment) =>
+          comment.commentId === commentId ? updatedComment : comment
+        ),
+      });
+
+      setLocalFeed(updatedFeed);
+      setSelectedFeed(updatedFeed);
+      updateFeedInState?.(updatedFeed);
+      setEditingCommentId(null);
+      setEditedComment("");
+      setActiveCommentMenuId(null);
+    } catch (error) {
+      console.error("댓글 수정 실패:", error);
+    }
+  };
+
+  const handleCommentDelete = async (commentId) => {
+    try {
+      await onCommentDelete?.(localFeed.feedId, commentId);
+
+      const updatedFeed = processFeed({
+        ...localFeed,
+        comments: (localFeed.comments || []).filter(
+          (comment) => comment.commentId !== commentId
+        ),
+      });
+
+      setLocalFeed(updatedFeed);
+      setSelectedFeed(updatedFeed);
+      updateFeedInState?.(updatedFeed);
+    } catch (error) {
+      console.error("댓글 삭제 실패:", error);
+    }
+  };
+
   const toggleCommentExpand = (commentId) => {
-    setExpandedCommentIds((prev) =>
-      prev.includes(commentId)
-        ? prev.filter((id) => id !== commentId)
-        : [...prev, commentId]
+    setExpandedCommentIds((previousIds) =>
+      previousIds.includes(commentId)
+        ? previousIds.filter((id) => id !== commentId)
+        : [...previousIds, commentId]
     );
   };
 
-  // 댓글 작성
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim() || isSubmitting || !feed) return;
-    setIsSubmitting(true);
-    try {
-      const newCommentRes = await onCommentSubmit?.(feed.feedId, newComment);
-      setNewComment("");
-
-      setLocalFeed((prev) => ({
-        ...prev,
-        comments: [
-          ...prev.comments,
-          {
-            ...newCommentRes,
-            username: newCommentRes.username ?? currentUser?.username ?? "익명",
-            userProfilePic:
-              newCommentRes.userProfilePic ?? currentUser?.userImg ?? null,
-          },
-        ],
-      }));
-    } catch (err) {
-      console.error("❌ 댓글 추가 실패:", err);
-    } finally {
-      setIsSubmitting(false);
-      commentInputRef.current?.focus();
-    }
-  };
-
-  // 댓글 삭제
-  const handleDeleteComment = async (commentId) => {
-    if (!feed) return;
-    try {
-      await onCommentDelete?.(feed.feedId, commentId);
-    } catch (err) {
-      console.error("❌ 댓글 삭제 실패:", err);
-    }
-  };
-
-  // 게시물 삭제 확인 처리
-  const handleDeleteConfirm = async () => {
-    console.log("🚀 handleDeleteConfirm 실행됨");
-    if (!feed?.feedId) {
-      console.warn("❗ feedId 없음:", feed);
-      return;
+  const clearImagePreview = () => {
+    const input = document.getElementById(`feed-detail-image-${localFeed.feedId}`);
+    if (input) {
+      input.value = "";
     }
 
-    try {
-      await onDelete(feed.feedId);
-      setShowConfirm(false);
-      onClose();
-    } catch (err) {
-      console.error("❌ 게시물 삭제 실패", err);
-    }
+    setEditedFile(null);
+    setImagePreview(null);
   };
-
-  // 시간 차이 표시 포맷 함수
-  const formatTimeAgo = (dateStr) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = Math.floor((now - date) / 60000);
-    if (diff < 1) return "방금 전";
-    if (diff < 60) return `${diff}분 전`;
-    if (diff < 1440) return `${Math.floor(diff / 60)}시간 전`;
-    return `${Math.floor(diff / 1440)}일 전`;
-  };
-
-  if (!feed) return null;
-  const hasImage = !!feed.imageUrl;
 
   return (
-    <div className="relative z-60">
-      {" "}
-      {/* 삭제 확인 모달 */}
-      {showConfirm && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70">
-          <DeleteConfirmModal
-            visible={true}
-            onCancel={() => setShowConfirm(false)}
-            onConfirm={handleDeleteConfirm}
-          />
-        </div>
-      )}
-      <div className="fixed inset-0 z-[9980] bg-transparent flex items-center justify-center p-4 overflow-y-auto">
-        {showLikedByModal && (
-          <div className="liked-users-modal fixed inset-0 z-[10000] flex items-center justify-center">
-            <LikedUsersModal
-              users={likedByUsers}
-              onClose={() => setShowLikedByModal(false)}
-            />
-          </div>
-        )}
-        <div
-          ref={modalRef}
-          className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col md:flex-row border border-gray-300"
+    <div className="fixed inset-0 z-[9980] flex items-center justify-center bg-slate-950/45 p-3 backdrop-blur-sm sm:p-5">
+      <div
+        ref={modalRef}
+        className="relative flex h-[min(92vh,56rem)] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-white/60 bg-white/95 shadow-[0_35px_90px_rgba(15,23,42,0.22)] lg:flex-row"
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-slate-600 shadow-lg transition hover:text-slate-900"
+          aria-label="닫기"
         >
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 z-20 bg-white/90 hover:bg-white rounded-full p-2 text-gray-700 hover:text-black transition-colors duration-200 shadow-md"
-            aria-label="닫기"
-          >
-            <FaTimes size={20} />
-          </button>
+          <FaTimes />
+        </button>
 
-          {hasImage && (
-            <div
-              className="w-full md:w-1/2 bg-black max-h-[80vh] overflow-hidden flex justify-center items-center"
-              onClick={() => setSelectedImage(feed.imageUrl)}
-              style={{ height: "300px", flexShrink: 0 }}
+        {hasImage ? (
+          <div className="relative h-[16rem] w-full shrink-0 overflow-hidden bg-slate-100 sm:h-[22rem] lg:h-full lg:w-[48%]">
+            <button
+              type="button"
+              onClick={() => setSelectedImage(normalizedImageUrl)}
+              className="block h-full w-full"
             >
               <img
-                src={feed.imageUrl}
-                alt="게시물 이미지"
-                className="w-full h-full object-contain bg-white"
+                src={normalizedImageUrl}
+                alt="게시글 이미지"
+                className="h-full w-full object-cover"
               />
+            </button>
+          </div>
+        ) : null}
+
+        <div className="flex min-h-0 flex-1 flex-col bg-white">
+          <header className="flex items-center gap-3 border-b border-slate-100 px-4 py-4 sm:px-6">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-rose-100 to-amber-100 ring-1 ring-slate-200">
+              {authorProfile?.userImg ? (
+                <img
+                  src={normalizeImageUrl(authorProfile.userImg)}
+                  alt={authorProfile?.username || "작성자"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <FaUser className="text-slate-500" />
+              )}
             </div>
-          )}
 
-          <div
-            className="flex flex-col flex-1 overflow-hidden"
-            style={{
-              height: hasImage
-                ? "calc(85vh - 50vh - 130px)"
-                : "calc(85vh - 130px)",
-            }}
-          >
-            <div className="flex items-center w-full px-4 py-3 border-b border-gray-100">
-              <img
-                src={normalizeImageUrl(
-                  authorProfile?.userImg || "/default-profile.jpg"
-                )}
-                alt={authorProfile?.username || "익명"}
-                className="w-9 h-9 rounded-full object-cover border border-gray-200"
-              />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">
+                {authorProfile?.username || localFeed.username || "작성자"}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
+                {formatTimeAgo(localFeed.createdAt)}
+              </p>
+            </div>
 
-              <div className="ml-3 flex-1 min-w-0">
-                <p className="font-bold text-black text-sm truncate">
-                  {authorProfile?.username || "익명"}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {formatTimeAgo(feed.createdAt)}
-                </p>
-              </div>
+            {canManagePost && (
+              <div className="relative mr-12 sm:mr-14">
+                <button
+                  type="button"
+                  onClick={() => setShowPostMenu((previous) => !previous)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <FaEllipsisV />
+                </button>
 
-              <div className="absolute top-3 right-3 flex items-center gap-2 z-20">
-                {currentUser?.userId === feed.userId && (
-                  <div className="relative">
+                {showPostMenu && (
+                  <div className="absolute right-0 top-12 z-20 flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
                     <button
-                      onClick={() => setShowPostDropdown(!showPostDropdown)}
-                      className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition"
+                      type="button"
+                      onClick={() => {
+                        setShowPostMenu(false);
+                        setIsEditingPost(true);
+                      }}
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
                     >
-                      <FaEllipsisV size={14} />
+                      <FaEdit />
+                      수정
                     </button>
-                    {showPostDropdown && (
-                      <div className="absolute right-0 mt-0 px-2 py-1 bg-white border rounded-lg shadow-lg z-10 flex space-x-1.5">
-                        <button
-                          onClick={() => {
-                            setIsEditingPost(true);
-                            setShowPostDropdown(false);
-                          }}
-                          className="p-2 hover:bg-gray-100 rounded-full text-gray-600"
-                          title="수정"
-                        >
-                          <FaEdit size={16} />
-                        </button>
-                        <button
-                          onClick={() => onRequestDelete(feed.feedId)}
-                          className="p-2 hover:bg-gray-100 rounded-full text-red-600"
-                          title="삭제"
-                        >
-                          <FaTrash size={16} />
-                        </button>
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPostMenu(false);
+                        onRequestDelete?.(localFeed.feedId);
+                      }}
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+                    >
+                      <FaTrash />
+                      삭제
+                    </button>
                   </div>
                 )}
-
-                <button
-                  onClick={onClose}
-                  className="bg-white/90 hover:bg-white rounded-full p-2 text-gray-700 hover:text-black transition-colors duration-200 shadow-md"
-                  aria-label="닫기"
-                >
-                  <FaTimes size={20} />
-                </button>
               </div>
-            </div>
+            )}
+          </header>
 
-            <div className="flex flex-col flex-1 overflow-hidden">
-              <div className="flex-1 overflow-y-auto">
-                {isEditingPost ? (
-                  <div className="px-4 py-3 space-y-4 bg-white border-b border-gray-100">
-                    {/* 업로드 버튼 */}
-                    <div className="outline-none focus:outline-none flex justify-between items-center">
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {isEditingPost ? (
+              <div className="space-y-4 px-4 py-5 sm:px-6">
+                <form onSubmit={handlePostUpdate} className="space-y-4">
+                  <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <label
+                      htmlFor={`feed-detail-image-${localFeed.feedId}`}
+                      className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700"
+                    >
+                      <FaImage className="text-rose-500" />
+                      이미지 변경
+                    </label>
+                    <input
+                      id={`feed-detail-image-${localFeed.feedId}`}
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) =>
+                        setEditedFile(event.target.files?.[0] || null)
+                      }
+                      className="hidden"
+                    />
+                  </div>
+
+                  {(editedFile || imagePreview) && (
+                    <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50">
+                      <img
+                        src={
+                          editedFile
+                            ? URL.createObjectURL(editedFile)
+                            : imagePreview
+                        }
+                        alt="수정 이미지 미리보기"
+                        className="h-64 w-full object-cover"
+                      />
                       <button
                         type="button"
-                        className="p-2 text-black hover:text-gray-700 hover:bg-gray-100 rounded-full transition-all"
+                        onClick={clearImagePreview}
+                        className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow transition hover:bg-white"
                       >
-                        <label className="cursor-pointer flex items-center gap-1">
-                          <FaImage className="text-xl text-custom-pink" />
-                          <span className="text-sm text-gray-700 font-bold">
-                            UPLOAD
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setEditedFile(e.target.files[0])}
-                            className="hidden"
-                          />
-                        </label>
+                        <FaTimes />
                       </button>
                     </div>
+                  )}
 
-                    {/* 이미지 미리보기 */}
-                    {editedFile && (
-                      <div className="mt-2 rounded-lg overflow-hidden border border-gray-300 relative group">
-                        <img
-                          src={URL.createObjectURL(editedFile)}
-                          alt="미리보기"
-                          className="w-full max-h-64 object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                          <button
-                            type="button"
-                            onClick={() => setEditedFile(null)}
-                            className="bg-white text-black p-2 rounded-full hover:bg-gray-100"
-                          >
-                            <FaTimes />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 게시글 텍스트 박스 */}
-                    <div className="relative">
-                      <textarea
-                        value={editedCaption}
-                        onChange={(e) => setEditedCaption(e.target.value)}
-                        placeholder="게시물 내용을 입력하세요..."
-                        className="w-full border border-gray-300 rounded-lg p-4 text-sm text-black resize-none h-36 pr-12"
-                        maxLength={500}
-                      ></textarea>
-                      <div className="absolute bottom-2 right-4 text-xs text-gray-400 pointer-events-none">
-                        {editedCaption.length}/500
-                      </div>
-                    </div>
-
-                    {/* 버튼 영역 */}
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => {
-                          setIsEditingPost(false);
-                          setEditedFile(null);
-                          setEditedCaption(feed.caption || "");
-                        }}
-                        className="px-4 py-2 font-bold text-pink-700 border border-pink-300 rounded-full hover:bg-pink-50 transition-colors text-sm"
-                      >
-                        취소
-                      </button>
-                      <button
-                        onClick={handlePostEditSubmit}
-                        className="px-4 py-2 font-bold bg-custom-pink text-white rounded-full hover:bg-pink-700 shadow-sm transition-all duration-300 text-sm"
-                      >
-                        저장
-                      </button>
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-sm">
+                    <textarea
+                      value={editedCaption}
+                      onChange={(event) => setEditedCaption(event.target.value)}
+                      placeholder="게시글 내용을 입력하세요."
+                      maxLength={500}
+                      className="min-h-40 w-full resize-none border-0 bg-transparent px-1 py-1 text-sm leading-6 text-slate-800 outline-none placeholder:text-slate-400"
+                    />
+                    <div className="mt-2 text-right text-xs text-slate-400">
+                      {editedCaption.length}/500
                     </div>
                   </div>
-                ) : (
-                  feed.caption && (
-                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                      <div
-                        ref={captionRef}
-                        className={`text-black whitespace-pre-wrap leading-relaxed font-medium break-words cursor-pointer relative transition-all duration-300 ${
-                          isExpanded ? "" : "line-clamp-[5]"
-                        }`}
-                        onClick={() => setIsExpanded(!isExpanded)}
-                      >
-                        {feed.caption}
-                        {!isExpanded && isCaptionLong && (
-                          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-50 to-transparent pointer-events-none" />
-                        )}
-                      </div>
-                    </div>
-                  )
-                )}
 
-                <div className="px-4 py-2 border-b border-gray-100 bg-white">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleLikeToggle}
-                        className={`flex items-center gap-2 p-1.5 rounded-full transition ${
-                          localFeed.liked
-                            ? "text-red-500 hover:bg-red-50"
-                            : "text-gray-600 hover:bg-gray-50"
-                        }`}
-                        aria-label={localFeed.liked ? "좋아요 취소" : "좋아요"}
-                      >
-                        {localFeed.liked ? (
-                          <FaHeart size={18} className="fill-current" />
-                        ) : (
-                          <FaRegHeart size={18} />
-                        )}
-                      </button>
-
-                      {/* ❤️ 하트 옆 숫자 (빨간색) */}
-                      <button
-                        onClick={() => onShowLikedBy?.(localFeed.feedId)}
-                        className="text-sm font-semibold text-red-500 hover:text-red-700 transition"
-                      >
-                        {localFeed.likes || 0}
-                      </button>
-
-                      {/* 🗨️ 댓글 아이콘과 숫자 */}
-                      <div className="flex items-center ml-4 text-gray-600 text-sm">
-                        <FaComment className="mr-1" />
-                        <span>{localFeed.comments?.length || 0}</span>
-                      </div>
-                    </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingPost(false);
+                        setEditedCaption(localFeed.caption || "");
+                        setEditedFile(null);
+                        setImagePreview(
+                          localFeed.image || localFeed.imageUrl
+                            ? normalizeImageUrl(
+                                localFeed.image || localFeed.imageUrl
+                              )
+                            : null
+                        );
+                      }}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded-full bg-gradient-to-r from-rose-500 to-orange-400 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-105"
+                    >
+                      저장하기
+                    </button>
                   </div>
-                </div>
-
-                {/* 댓글 전체 영역 */}
-                <div className="flex-1 flex flex-col overflow-hidden">
-                  {/* 댓글 목록 (스크롤 가능 영역) */}
-                  <div
-                    ref={commentsContainerRef}
-                    className="flex-1 overflow-y-auto px-3 space-y-2"
+                </form>
+              </div>
+            ) : (
+              <div className="space-y-5 px-4 py-5 sm:px-6">
+                <section className="rounded-[1.75rem] border border-slate-100 bg-gradient-to-br from-white to-slate-50 px-5 py-4">
+                  <p
+                    className={`whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700 sm:text-base ${
+                      !expandedCaption && isCaptionLong ? "line-clamp-5" : ""
+                    }`}
                   >
-                    {localFeed.comments?.length > 0 ? (
-                      localFeed.comments.map((comment) => {
+                    {localFeed.caption?.trim() || "아직 작성된 소개가 없습니다."}
+                  </p>
+
+                  {isCaptionLong && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedCaption((previous) => !previous)}
+                      className="mt-3 text-sm font-semibold text-rose-500 transition hover:text-rose-600"
+                    >
+                      {expandedCaption ? "접기" : "더 보기"}
+                    </button>
+                  )}
+                </section>
+
+                <section className="flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border border-slate-100 bg-white px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={handleLikeClick}
+                      className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${
+                        localFeed.liked
+                          ? "bg-rose-50 text-rose-500"
+                          : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                      }`}
+                    >
+                      {localFeed.liked ? <FaHeart /> : <FaRegHeart />}
+                      좋아요
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onShowLikedBy?.(localFeed.feedId)}
+                      className="text-sm font-semibold text-rose-500 transition hover:text-rose-600"
+                    >
+                      {localFeed.likes || 0}
+                    </button>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <FaComment />
+                      댓글 {sortedComments.length}
+                    </div>
+                  </div>
+
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">
+                    {formatTimeAgo(localFeed.createdAt)}
+                  </span>
+                </section>
+
+                <section className="rounded-[1.75rem] border border-white/80 bg-slate-50/80 p-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)] sm:p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-slate-800 sm:text-base">
+                      댓글 {sortedComments.length}
+                    </h3>
+                  </div>
+
+                  <div
+                    ref={commentsRef}
+                    className="max-h-[18rem] space-y-3 overflow-y-auto pr-1"
+                  >
+                    {sortedComments.length > 0 ? (
+                      sortedComments.map((comment) => {
                         const isExpanded = expandedCommentIds.includes(
                           comment.commentId
                         );
-                        const isEditing =
-                          editingCommentId === comment.commentId;
+                        const isEditing = editingCommentId === comment.commentId;
+                        const isCommentOwner =
+                          currentUser?.userId?.toString() ===
+                          comment?.userId?.toString();
+                        const isCommentLong =
+                          (comment?.content || "").length >
+                          COMMENT_COLLAPSE_LENGTH;
 
                         return (
                           <div
                             key={comment.commentId}
-                            className="flex items-start gap-2 py-1.5 border-b border-gray-100 last:border-0"
+                            className="rounded-[1.25rem] border border-slate-100 bg-white px-4 py-3"
                           >
-                            {/* 프로필 */}
-                            <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden shrink-0">
-                              {comment.userProfilePic ? (
-                                <img
-                                  src={normalizeImageUrl(
-                                    comment.userProfilePic
-                                  )}
-                                  alt={comment.username}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <FaUser className="text-gray-600" size={12} />
-                              )}
-                            </div>
-
-                            {/* 닉네임 + 시간 + 수정삭제 + 내용 */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <p className="text-xs font-bold text-black">
-                                    {comment.username}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {formatTimeAgo(comment.createdAt)}
-                                  </p>
-                                </div>
-
-                                {currentUser?.userId === comment.userId && (
-                                  <div className="relative ml-2">
-                                    <button
-                                      onClick={() =>
-                                        setExpandedCommentIds((prev) =>
-                                          prev.includes(comment.commentId)
-                                            ? prev.filter(
-                                                (id) => id !== comment.commentId
-                                              )
-                                            : [...prev, comment.commentId]
-                                        )
-                                      }
-                                      className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
-                                    >
-                                      <FaEllipsisV size={12} />
-                                    </button>
-
-                                    {expandedCommentIds.includes(
-                                      comment.commentId
-                                    ) && (
-                                      <div className="absolute right-0 mt-0 px-1 py-1 bg-white border rounded-lg shadow-lg z-10 flex space-x-1.5">
-                                        <button
-                                          onClick={() => {
-                                            setEditingCommentId(
-                                              comment.commentId
-                                            );
-                                            setEditedComment(comment.content);
-                                            setExpandedCommentIds([]);
-                                          }}
-                                          className="p-2 hover:bg-gray-100 rounded-full text-gray-600"
-                                          title="수정"
-                                        >
-                                          <FaEdit size={14} />
-                                        </button>
-                                        <button
-                                          onClick={() => {
-                                            handleDeleteComment(
-                                              comment.commentId
-                                            );
-                                            setExpandedCommentIds([]);
-                                          }}
-                                          className="p-2 hover:bg-gray-100 rounded-full text-red-600"
-                                          title="삭제"
-                                        >
-                                          <FaTrash size={14} />
-                                        </button>
-                                      </div>
-                                    )}
-                                  </div>
+                            <div className="flex items-start gap-3">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200">
+                                {comment.userProfilePic ? (
+                                  <img
+                                    src={normalizeImageUrl(comment.userProfilePic)}
+                                    alt={comment.username || "사용자"}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <FaUser className="text-slate-400" />
                                 )}
                               </div>
 
-                              {isEditing ? (
-                                <div className="flex gap-2 mt-1">
-                                  <input
-                                    value={editedComment}
-                                    onChange={(e) =>
-                                      setEditedComment(e.target.value)
-                                    }
-                                    className="flex-1 border px-2 py-1 text-sm rounded"
-                                  />
-                                  <button
-                                    onClick={async () => {
-                                      try {
-                                        const updated =
-                                          await feedApi.updateComment(
-                                            feed.feedId,
-                                            comment.commentId,
-                                            editedComment
-                                          );
-                                        setLocalFeed((prev) => ({
-                                          ...prev,
-                                          comments: prev.comments.map((c) =>
-                                            c.commentId === comment.commentId
-                                              ? updated
-                                              : c
-                                          ),
-                                        }));
-                                        setEditingCommentId(null);
-                                        setEditedComment("");
-                                      } catch (err) {
-                                        console.error("댓글 수정 실패", err);
-                                      }
-                                    }}
-                                    className="bg-pink-600 hover:bg-pink-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-sm sm:text-base flex items-center justify-center transition"
-                                  >
-                                    <FaCheck className="text-white" />
-                                  </button>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-semibold text-slate-800">
+                                    {comment.username || "사용자"}
+                                  </span>
+                                  <span className="text-xs text-slate-400">
+                                    {formatTimeAgo(comment.createdAt)}
+                                  </span>
                                 </div>
-                              ) : (
-                                <p
-                                  className={`text-sm text-black break-words whitespace-pre-wrap leading-relaxed cursor-pointer relative transition-all duration-300 ${
-                                    isExpanded ? "" : "line-clamp-3"
-                                  }`}
-                                  onClick={() =>
-                                    toggleCommentExpand(comment.commentId)
-                                  }
-                                >
-                                  {comment.content}
-                                  {!isExpanded &&
-                                    comment.content.split("\n").length > 3 && (
-                                      <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+
+                                {isEditing ? (
+                                  <div className="mt-3 flex items-center gap-2">
+                                    <input
+                                      value={editedComment}
+                                      onChange={(event) =>
+                                        setEditedComment(event.target.value)
+                                      }
+                                      className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-rose-300"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleCommentUpdate(comment.commentId)
+                                      }
+                                      className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-orange-400 text-white shadow-sm transition hover:brightness-105"
+                                    >
+                                      <FaCheck />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <p
+                                      className={`mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600 ${
+                                        !isExpanded && isCommentLong
+                                          ? "line-clamp-3"
+                                          : ""
+                                      }`}
+                                    >
+                                      {comment.content || ""}
+                                    </p>
+                                    {isCommentLong && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          toggleCommentExpand(comment.commentId)
+                                        }
+                                        className="mt-2 text-xs font-semibold text-rose-500 transition hover:text-rose-600"
+                                      >
+                                        {isExpanded ? "접기" : "더 보기"}
+                                      </button>
                                     )}
-                                </p>
+                                  </>
+                                )}
+                              </div>
+
+                              {isCommentOwner && (
+                                <div className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setActiveCommentMenuId((previous) =>
+                                        previous === comment.commentId
+                                          ? null
+                                          : comment.commentId
+                                      )
+                                    }
+                                    className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                                  >
+                                    <FaEllipsisV className="text-xs" />
+                                  </button>
+
+                                  {activeCommentMenuId === comment.commentId && (
+                                    <div className="absolute right-0 top-9 z-20 flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setEditingCommentId(comment.commentId);
+                                          setEditedComment(comment.content || "");
+                                          setActiveCommentMenuId(null);
+                                        }}
+                                        className="px-3 py-2 text-slate-600 transition hover:bg-slate-50"
+                                      >
+                                        <FaEdit />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          handleCommentDelete(comment.commentId);
+                                          setActiveCommentMenuId(null);
+                                        }}
+                                        className="px-3 py-2 text-rose-600 transition hover:bg-rose-50"
+                                      >
+                                        <FaTrash />
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
                         );
                       })
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-6 text-center">
-                        <FaComment className="text-gray-300 text-3xl mb-2" />
-                        <p className="text-gray-500 text-sm">
-                          첫 댓글을 남겨보세요!
+                      <div className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white px-5 py-8 text-center">
+                        <FaComment className="mx-auto mb-3 text-2xl text-slate-300" />
+                        <p className="text-sm text-slate-500">
+                          아직 댓글이 없습니다. 첫 댓글을 남겨보세요.
                         </p>
                       </div>
                     )}
                   </div>
-                </div>
 
-                {/* 댓글 입력창 - 항상 하단 고정 */}
-                <div
-                  className="border-t bg-white shadow-md shrink-0 sticky bottom-0 z-10 px-3 py-2"
-                  style={{
-                    paddingBottom:
-                      "calc(env(safe-area-inset-bottom, 0px) + 8px)",
-                  }}
-                >
-                  <form onSubmit={handleSubmit} className="flex items-center">
-                    <input
-                      ref={commentInputRef}
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="댓글을 입력하세요..."
-                      className="w-full py-1.5 px-3 border border-gray-300 rounded-full text-sm text-black focus:ring-2 focus:ring-black focus:border-transparent transition"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newComment.trim() || isSubmitting}
-                      className={`ml-2 p-2 rounded-full ${
-                        newComment.trim() && !isSubmitting
-                          ? "bg-black text-white hover:bg-gray-800"
-                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      } transition flex items-center justify-center`}
-                    >
-                      <FaPaperPlane size={12} />
-                    </button>
-                  </form>
-                  {selectedImage && (
-                    <div className="fixed inset-0 z-[9999]">
-                      <ImageModal
-                        imageUrl={selectedImage}
-                        onClose={() => setSelectedImage(null)}
+                  <form onSubmit={handleLocalCommentSubmit} className="mt-4">
+                    <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+                      <input
+                        value={newComment}
+                        onChange={(event) => setNewComment(event.target.value)}
+                        placeholder="댓글을 입력하세요."
+                        maxLength={300}
+                        className="min-w-0 flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
                       />
+                      <span className="hidden text-xs text-slate-300 sm:block">
+                        {newComment.length}/300
+                      </span>
+                      <button
+                        type="submit"
+                        disabled={!newComment.trim() || isSubmitting}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full text-white transition ${
+                          newComment.trim() && !isSubmitting
+                            ? "bg-gradient-to-r from-rose-500 to-orange-400 shadow-sm hover:brightness-105"
+                            : "cursor-not-allowed bg-slate-300"
+                        }`}
+                      >
+                        <FaPaperPlane />
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </form>
+                </section>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
+
+      {selectedImage && (
+        <div className="fixed inset-0 z-[10000]">
+          <ImageModal
+            imageUrl={selectedImage}
+            onClose={() => setSelectedImage(null)}
+          />
+        </div>
+      )}
     </div>
   );
 };

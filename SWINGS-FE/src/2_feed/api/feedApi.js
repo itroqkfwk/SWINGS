@@ -1,19 +1,32 @@
 import axios from "../../1_user/api/axiosInstance";
+import { DEFAULT_FEED_QUERY_OPTIONS } from "../utils/feedUtils";
+
+const requireUserId = (userId) => {
+  if (!userId) {
+    throw new Error("Login is required");
+  }
+};
 
 const feedApi = {
   getFeeds: async (
     userId,
     page,
     size = 10,
-    options = { sort: "latest", filter: "all" }
+    options = DEFAULT_FEED_QUERY_OPTIONS
   ) => {
+    const { sort, filter } = {
+      ...DEFAULT_FEED_QUERY_OPTIONS,
+      ...options,
+    };
+
     const params = {
       page,
       size,
-      sort: options.sort,
-      filter: options.filter,
+      sort,
+      filter,
       userId,
     };
+
     const response = await axios.get("/feeds/filtered", { params });
     return response.data;
   },
@@ -62,7 +75,7 @@ const feedApi = {
   },
 
   likeFeed: async (feedId, userId) => {
-    if (!userId) throw new Error("Login is required");
+    requireUserId(userId);
     const response = await axios.put(`/feeds/${feedId}/like`, null, {
       params: { userId },
     });
@@ -70,7 +83,7 @@ const feedApi = {
   },
 
   unlikeFeed: async (feedId, userId) => {
-    if (!userId) throw new Error("Login is required");
+    requireUserId(userId);
     const response = await axios.put(`/feeds/${feedId}/unlike`, null, {
       params: { userId },
     });
@@ -83,7 +96,7 @@ const feedApi = {
   },
 
   addComment: async (feedId, userId, content) => {
-    if (!userId) throw new Error("Login is required");
+    requireUserId(userId);
     const response = await axios.post(`/feeds/${feedId}/comments`, null, {
       params: { userId, content },
     });
@@ -107,11 +120,6 @@ const feedApi = {
 
   getUserFeeds: async (userId) => {
     const response = await axios.get(`/feeds/user/${userId}`);
-    return response.data;
-  },
-
-  getCurrentUser: async () => {
-    const response = await axios.get("/users/me");
     return response.data;
   },
 };

@@ -1,51 +1,78 @@
-import { Routes, Route } from "react-router-dom";
-import { Navigate } from "react-router-dom";
-import UserLayout from "./1_user/layouts/UserLayout";
-import AdminLayout from "./1_user/layouts/AdminLayout";
-import UserRoutes from "./1_user/routes/UserRoutes";
-import AdminRoutes from "./1_user/routes/AdminRoutes";
-import StartLogin from "./1_user/pages/StartLogin";
-import SignUp from "./1_user/pages/SignUp";
-import MatchRoutes from "./3_match/routes/MatchRoutes";
-import ChatRoutes from "./3_match/routes/ChatRoutes";
-import FeedRoutes from "./2_feed/routes/FeedRoutes";
-import MatchGroupRoutes from "./4_matchgroup/routes/MatchGroupRoutes.jsx";
-import NotificationRoutes from "./5_notification/routes/NotificationRoutes.jsx";
-import SocialRoutes from "./2_feed/routes/SocialRoutes";
-import SocialPage from "./2_feed/pages/SocialPage";
-import MyPage from "./1_user/pages/MyPage";
+import React, { Suspense, lazy } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+import PrivateRoute from "./1_user/components/PrivateRoute";
 import ScrollToTop from "./components/ScrollToTop";
+
+const UserLayout = lazy(() => import("./1_user/layouts/UserLayout"));
+const AdminLayout = lazy(() => import("./1_user/layouts/AdminLayout"));
+const UserRoutes = lazy(() => import("./1_user/routes/UserRoutes"));
+const AdminRoutes = lazy(() => import("./1_user/routes/AdminRoutes"));
+const StartLogin = lazy(() => import("./1_user/pages/StartLogin"));
+const SignUp = lazy(() => import("./1_user/pages/SignUp"));
+const MatchRoutes = lazy(() => import("./3_match/routes/MatchRoutes"));
+const ChatRoutes = lazy(() => import("./3_match/routes/ChatRoutes"));
+const FeedRoutes = lazy(() => import("./2_feed/routes/FeedRoutes"));
+const MatchGroupRoutes = lazy(
+  () => import("./4_matchgroup/routes/MatchGroupRoutes.jsx")
+);
+const NotificationRoutes = lazy(
+  () => import("./5_notification/routes/NotificationRoutes.jsx")
+);
+const SocialRoutes = lazy(() => import("./2_feed/routes/SocialRoutes"));
+const SocialPage = lazy(() => import("./2_feed/pages/SocialPage"));
+const MyPage = lazy(() => import("./1_user/pages/MyPage"));
+
+const RouteFallback = () => (
+  <div className="flex min-h-screen items-center justify-center bg-[var(--shell-bg)] px-6">
+    <div className="glass-panel w-full max-w-md rounded-[2rem] border border-white/70 px-6 py-10 text-center shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-400">
+        Swings
+      </p>
+      <h1 className="mt-3 text-xl font-black text-slate-900">
+        화면을 준비하는 중입니다
+      </h1>
+      <p className="mt-3 text-sm leading-6 text-slate-500">
+        필요한 화면만 순서대로 불러오고 있습니다.
+      </p>
+    </div>
+  </div>
+);
 
 export default function App() {
   return (
     <>
-      <ScrollToTop /> {/* ✅ 페이지 이동 시 스크롤 맨 위로 이동 */}
-      <Routes>
-        {/* Nginx root 요청*/}
-        <Route path="/" element={<Navigate to="/swings" />} />
+      <ScrollToTop />
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/swings" replace />} />
 
-        {/* 로그인/회원가입 (Nav 없이) */}
-        <Route path="/swings" element={<StartLogin />} />
-        <Route path="/swings/signup" element={<SignUp />} />
+          <Route path="/swings" element={<StartLogin />} />
+          <Route path="/swings/signup" element={<SignUp />} />
 
-        {/* 관리자 페이지 (AdminNavBar 포함) */}
-        <Route path="/swings/admin/*" element={<AdminLayout />}>
-          <Route path="*" element={<AdminRoutes />} />
-        </Route>
+          <Route path="/swings/admin/*" element={<AdminLayout />}>
+            <Route path="*" element={<AdminRoutes />} />
+          </Route>
 
-        {/* 사용자 페이지 (NavBar + BottomNavBar 포함) */}
-        <Route path="/swings/*" element={<UserLayout />}>
-          <Route path="match/*" element={<MatchRoutes />} />
-          <Route path="matchgroup/*" element={<MatchGroupRoutes />} />
-          <Route path="chat/*" element={<ChatRoutes />} />
-          <Route path="feed/*" element={<FeedRoutes />} />
-          <Route path="social/*" element={<SocialRoutes />} />
-          <Route path="notification/*" element={<NotificationRoutes />} />
-          <Route path="profile/:userId" element={<SocialPage />} />
-          <Route path="*" element={<UserRoutes />} />
-          <Route path="mypage" element={<MyPage />} />
-        </Route>
-      </Routes>
+          <Route
+            path="/swings/*"
+            element={
+              <PrivateRoute>
+                <UserLayout />
+              </PrivateRoute>
+            }
+          >
+            <Route path="match/*" element={<MatchRoutes />} />
+            <Route path="matchgroup/*" element={<MatchGroupRoutes />} />
+            <Route path="chat/*" element={<ChatRoutes />} />
+            <Route path="feed/*" element={<FeedRoutes />} />
+            <Route path="social/*" element={<SocialRoutes />} />
+            <Route path="notification/*" element={<NotificationRoutes />} />
+            <Route path="profile/:userId" element={<SocialPage />} />
+            <Route path="*" element={<UserRoutes />} />
+            <Route path="mypage" element={<MyPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </>
   );
 }

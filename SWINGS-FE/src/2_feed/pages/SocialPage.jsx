@@ -1,38 +1,31 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import NewPostForm from "../components/NewPostForm";
-
-import useProfileData from "../hooks/useProfileData";
-import useFeedData from "../hooks/useFeedData";
-import { processFeed } from "../utils/feedUtils";
-
-import SocialProfile from "../components/SocialProfile";
-import ImageModal from "../components/ImageModal";
-import FollowListModal from "../components/FollowListModal";
-import LikedUsersModal from "../components/LikedUsersModal";
-import FeedDetailModal from "../components/FeedDetailModal";
-import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useNavigate, useParams } from "react-router-dom";
 import CreatePostButton from "../components/CreatePostButton";
-import useNewPostForm from "../hooks/useNewPostForm";
-
-import socialApi from "../api/socialApi";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import FeedDetailModal from "../components/FeedDetailModal";
+import FollowListModal from "../components/FollowListModal";
+import ImageModal from "../components/ImageModal";
+import LikedUsersModal from "../components/LikedUsersModal";
+import NewPostForm from "../components/NewPostForm";
+import SocialProfile from "../components/SocialProfile";
 import feedApi from "../api/feedApi";
+import socialApi from "../api/socialApi";
+import useFeedData from "../hooks/useFeedData";
+import useNewPostForm from "../hooks/useNewPostForm";
+import useProfileData from "../hooks/useProfileData";
+import { processFeed, replaceFeedById } from "../utils/feedUtils";
 
 const SocialPage = () => {
   const { userId: paramUserId } = useParams();
   const navigate = useNavigate();
-  const [showChargeModal, setShowChargeModal] = useState(false);
-
-  const [showSuperChatModal, setShowSuperChatModal] = useState(false);
 
   const [currentUser, setCurrentUser] = useState(null);
   const [viewedUserId, setViewedUserId] = useState(
     paramUserId ? Number(paramUserId) : null
   );
-
   const [selectedFeed, setSelectedFeed] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [showFollowersList, setShowFollowersList] = useState(false);
@@ -40,9 +33,9 @@ const SocialPage = () => {
   const [likedByUsers, setLikedByUsers] = useState([]);
   const [showLikedByModal, setShowLikedByModal] = useState(false);
   const [showNewPostForm, setShowNewPostForm] = useState(false);
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTargetFeedId, setDeleteTargetFeedId] = useState(null);
+  const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
   const {
     profile,
@@ -68,169 +61,129 @@ const SocialPage = () => {
   const {
     newPostContent,
     setNewPostContent,
+    newPostImage,
     imagePreview,
     handleImageChange,
+    clearImage,
     reset,
   } = useNewPostForm();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!currentUser?.userId) return;
-
-    const formData = new FormData();
-    formData.append("userId", currentUser.userId);
-    formData.append("content", newPostContent);
-    if (selectedImage) formData.append("file", selectedImage);
-
-    try {
-      const newPost = await feedApi.uploadFeed(formData);
-      setFeeds((prev) => [newPost, ...prev]);
-      reset();
-      setSelectedImage(null);
-      setShowNewPostForm(false);
-    } catch {
-      console.error("게시물 업로드 실패");
-    }
-  };
-
   useEffect(() => {
     const fetchUser = async () => {
-      const user = await socialApi.getCurrentUser();
-      setCurrentUser(user);
+      try {
+        const user = await socialApi.getCurrentUser();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error("현재 사용자 조회 실패:", error);
+      }
     };
+
     fetchUser();
   }, []);
 
   useEffect(() => {
     if (paramUserId || currentUser) {
-      const idToView = paramUserId ? Number(paramUserId) : currentUser?.userId;
-      setViewedUserId(idToView);
+      setViewedUserId(paramUserId ? Number(paramUserId) : currentUser?.userId);
     }
   }, [paramUserId, currentUser]);
 
   useEffect(() => {
-    if (currentUser) {
-      refreshProfileData();
-      refreshFeeds();
-    }
+    if (!currentUser || !viewedUserId) return;
+    refreshProfileData();
+    refreshFeeds();
   }, [currentUser, viewedUserId]);
+
+  const isCurrentUserProfile = currentUser?.userId === viewedUserId;
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!currentUser?.userId) return;
+
+    setIsSubmittingPost(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("userId", currentUser.userId);
+      formData.append("content", newPostContent);
+
+      if (newPostImage) {
+        formData.append("file", newPostImage);
+      }
+
+      const createdFeed = await feedApi.uploadFeed(formData);
+      setFeeds((previousFeeds) => [processFeed(createdFeed), ...previousFeeds]);
+      setShowNewPostForm(false);
+      reset();
+    } catch (error) {
+      console.error("게시물 업로드 실패:", error);
+    } finally {
+      setIsSubmittingPost(false);
+    }
+  };
 
   const handleShowLikedBy = async (feedId) => {
     try {
       const users = await feedApi.getLikedUsers(feedId);
       setLikedByUsers(users);
       setShowLikedByModal(true);
-    } catch {
-      console.error("좋아요 목록 불러오기 실패");
+    } catch (error) {
+      console.error("좋아요 목록 불러오기 실패:", error);
     }
   };
 
   const handleFeedClick = (feed) => {
-    const processed = processFeed(feed);
-    setSelectedFeed(processed);
+    setSelectedFeed(processFeed(feed));
   };
 
   const handleFeedDelete = async (feedId) => {
     try {
       await handleDelete(feedId);
       setSelectedFeed(null);
-      setFeeds((prev) => prev.filter((f) => f.feedId !== feedId));
-      console.log("게시물이 삭제되었습니다.");
-    } catch {
-      console.error("게시물 삭제에 실패했습니다.");
-    }
-  };
-
-  const confirmSuperChat = async () => {
-    try {
-      const data = new URLSearchParams();
-      data.append("amount", 3);
-      data.append("description", "슈퍼챗 사용");
-
-      await axios.post("/users/me/points/use", data, {
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      });
-
-      await axios.post("/api/chat/room", null, {
-        params: {
-          user1: currentUser.username,
-          user2: profile.username,
-          isSuperChat: true,
-        },
-      });
-
-      toast.success("💎 슈퍼챗 성공!");
-      fetchRecommendedUser(currentUser.username);
+      setFeeds((previousFeeds) =>
+        previousFeeds.filter((feed) => feed.feedId !== feedId)
+      );
     } catch (error) {
-      const message = error?.response?.data?.message;
-      if (
-        error.response?.status === 400 ||
-        error.response?.status === 500 ||
-        message?.includes("포인트가 부족")
-      ) {
-        setShowChargeModal(true); // ✅ 충전 모달
-      } else {
-        toast.error("슈퍼챗 도중 오류 발생");
-      }
-    } finally {
-      setShowSuperChatModal(false);
+      console.error("게시물 삭제 실패:", error);
     }
   };
 
   return (
-    <div className="min-h-screen">
-      {" "}
+    <div className="min-h-screen px-4 py-4 sm:px-6 lg:px-8">
       <ToastContainer position="bottom-right" />
-      <SocialProfile
-        user={profile}
-        userStats={stats}
-        userIntroduce={introduce}
-        setIntroduce={setIntroduce}
-        isCurrentUser={currentUser?.userId === viewedUserId}
-        currentUser={currentUser}
-        onSuperChatClick={() => setShowSuperChatModal(true)}
-        onRequestCharge={() => navigate("/swings/points")}
-        isFollowing={isFollowing}
-        onFollowToggle={async () => {
-          if (
-            !currentUser ||
-            !profile ||
-            !currentUser.userId ||
-            !profile.userId
-          ) {
-            console.warn("❌ 필수 정보 없음");
-            return;
-          }
 
-          console.log(
-            "👉 follow/unfollow:",
-            currentUser.userId,
-            profile.userId
-          );
+      <div className="mx-auto max-w-[1280px]">
+        <SocialProfile
+          user={profile}
+          userStats={stats}
+          userIntroduce={introduce}
+          setIntroduce={setIntroduce}
+          isCurrentUser={isCurrentUserProfile}
+          currentUser={currentUser}
+          onRequestCharge={() => navigate("/swings/points")}
+          isFollowing={isFollowing}
+          onFollowToggle={async () => {
+            if (!currentUser?.userId || !profile?.userId) return;
 
-          try {
-            if (isFollowing) {
-              await socialApi.unfollowUser(currentUser.userId, profile.userId);
-              console.log("언팔로우 완료");
-            } else {
-              await socialApi.followUser(currentUser.userId, profile.userId);
-              console.log("팔로우 완료");
+            try {
+              if (isFollowing) {
+                await socialApi.unfollowUser(currentUser.userId, profile.userId);
+              } else {
+                await socialApi.followUser(currentUser.userId, profile.userId);
+              }
+
+              await refreshProfileData();
+            } catch (error) {
+              console.error("팔로우 처리 실패:", error);
             }
+          }}
+          onShowFollowers={() => setShowFollowersList(true)}
+          onShowFollowing={() => setShowFollowingList(true)}
+          feeds={feeds}
+          onFeedClick={handleFeedClick}
+          refreshProfileData={refreshProfileData}
+        />
+      </div>
 
-            await refreshProfileData();
-          } catch (error) {
-            const msg = error?.response?.data?.message;
-            console.error("팔로우 처리에 실패했습니다:", msg);
-            console.error(msg || "팔로우 처리에 실패했습니다.");
-          }
-        }}
-        onShowFollowers={() => setShowFollowersList(true)}
-        onShowFollowing={() => setShowFollowingList(true)}
-        onGoToSettings={() => navigate("/swings/mypage")}
-        feeds={feeds}
-        onFeedClick={handleFeedClick}
-        refreshProfileData={refreshProfileData}
-      />
       {showFollowersList && (
         <FollowListModal
           users={followers}
@@ -238,6 +191,7 @@ const SocialPage = () => {
           title="팔로워"
         />
       )}
+
       {showFollowingList && (
         <FollowListModal
           users={followings}
@@ -245,30 +199,14 @@ const SocialPage = () => {
           title="팔로잉"
         />
       )}
+
       {showLikedByModal && (
         <LikedUsersModal
           users={likedByUsers}
           onClose={() => setShowLikedByModal(false)}
         />
       )}
-      {showSuperChatModal && (
-        <ConfirmModal
-          message={`슈퍼챗은 3하트을 사용합니다.\n사용하시겠어요?`}
-          confirmLabel="사용하기"
-          cancelLabel="취소"
-          onConfirm={handleSuperChatConfirm}
-          onCancel={() => setShowSuperChatModal(false)}
-        />
-      )}
-      {showChargeModal && (
-        <ConfirmModal
-          message={`하트가 부족합니다.\n충전하러 가시겠어요?`}
-          confirmLabel="충전소로 가기"
-          cancelLabel="닫기"
-          onConfirm={onRequestCharge}
-          onCancel={() => setShowChargeModal(false)}
-        />
-      )}
+
       {selectedFeed && (
         <FeedDetailModal
           feed={selectedFeed}
@@ -284,54 +222,54 @@ const SocialPage = () => {
           onCommentDelete={handleCommentDelete}
           setSelectedFeed={setSelectedFeed}
           updateFeedInState={(updatedFeed) => {
-            setFeeds((prev) =>
-              prev.map((f) =>
-                f.feedId === updatedFeed.feedId ? updatedFeed : f
-              )
+            setFeeds((previousFeeds) =>
+              replaceFeedById(previousFeeds, updatedFeed)
             );
           }}
         />
       )}
+
       {showDeleteModal && (
         <DeleteConfirmModal
-          visible={true}
+          visible
           onCancel={() => {
             setShowDeleteModal(false);
             setDeleteTargetFeedId(null);
           }}
           onConfirm={async () => {
-            try {
-              if (!deleteTargetFeedId) return;
-              await handleFeedDelete(deleteTargetFeedId);
-              setDeleteTargetFeedId(null);
-              setShowDeleteModal(false);
-            } catch (err) {
-              console.error("게시물 삭제에 실패했습니다.", err);
-            }
+            if (!deleteTargetFeedId) return;
+            await handleFeedDelete(deleteTargetFeedId);
+            setDeleteTargetFeedId(null);
+            setShowDeleteModal(false);
           }}
         />
       )}
+
       {selectedImage && (
         <ImageModal
           imageUrl={selectedImage}
           onClose={() => setSelectedImage(null)}
         />
       )}
-      <CreatePostButton
-        onClick={() => setShowNewPostForm(true)}
-        customPosition="bottom-24 right-6"
-      />
+
+      {isCurrentUserProfile && (
+        <CreatePostButton
+          onClick={() => setShowNewPostForm(true)}
+          customPosition="bottom-24 right-5 sm:right-7 xl:right-10"
+        />
+      )}
+
       <AnimatePresence>
         {showNewPostForm && (
           <motion.div
             key="new-post-form"
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 bg-transparent flex items-center justify-center"
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm"
           >
-            <div className="w-[90vw] max-w-md px-4">
+            <div className="w-full max-w-xl">
               <NewPostForm
                 newPostContent={newPostContent}
                 setNewPostContent={setNewPostContent}
@@ -342,8 +280,8 @@ const SocialPage = () => {
                   setShowNewPostForm(false);
                   reset();
                 }}
-                selectedImage={selectedImage}
-                setSelectedImage={setSelectedImage}
+                clearSelectedImage={clearImage}
+                isSubmitting={isSubmittingPost}
               />
             </div>
           </motion.div>

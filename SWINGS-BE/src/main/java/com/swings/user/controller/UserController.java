@@ -65,6 +65,18 @@ public class UserController {
         return ResponseEntity.ok(userService.getCurrentUserDto());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
+        HttpStatus status = "인증 정보가 유효하지 않습니다.".equals(e.getMessage())
+                ? HttpStatus.UNAUTHORIZED
+                : HttpStatus.BAD_REQUEST;
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", e.getMessage());
+
+        return ResponseEntity.status(status).body(response);
+    }
+
     @PatchMapping("/{username}")
     public ResponseEntity<String> updateUser(@PathVariable("username") String username, @RequestBody UserDTO dto) {
         UserEntity updatedUser = userService.updateUser(username, dto);

@@ -4,6 +4,67 @@ import { VitePWA } from "vite-plugin-pwa";
 import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
 import rollupNodePolyFill from "rollup-plugin-node-polyfills";
 
+const manualChunks = (id) => {
+  if (!id.includes("node_modules")) {
+    return;
+  }
+
+  if (id.includes("react-router") || id.includes("@remix-run")) {
+    return "router";
+  }
+
+  if (id.includes("framer-motion")) {
+    return "motion";
+  }
+
+  if (id.includes("/react/") || id.includes("/react-dom/")) {
+    return "react-core";
+  }
+
+  if (
+    id.includes("date-fns") ||
+    id.includes("dayjs") ||
+    id.includes("react-datepicker") ||
+    id.includes("react-day-picker")
+  ) {
+    return "date-ui";
+  }
+
+  if (id.includes("firebase")) {
+    return "firebase";
+  }
+
+  if (id.includes("react-select") || id.includes("@radix-ui")) {
+    return "form-ui";
+  }
+
+  if (
+    id.includes("react-toastify") ||
+    id.includes("react-hot-toast") ||
+    id.includes("sweetalert2")
+  ) {
+    return "feedback";
+  }
+
+  if (id.includes("react-icons") || id.includes("lucide-react")) {
+    return "icons";
+  }
+
+  if (id.includes("workbox") || id.includes("vite-plugin-pwa")) {
+    return "pwa";
+  }
+
+  if (
+    id.includes("axios") ||
+    id.includes("sockjs-client") ||
+    id.includes("stompjs")
+  ) {
+    return "network";
+  }
+
+  return "vendor";
+};
+
 export default defineConfig({
   plugins: [
     react(),
@@ -53,6 +114,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       plugins: [rollupNodePolyFill()],
+      output: {
+        manualChunks,
+      },
     },
   },
   server: {

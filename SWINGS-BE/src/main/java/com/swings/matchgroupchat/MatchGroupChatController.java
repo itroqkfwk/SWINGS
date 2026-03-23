@@ -28,7 +28,7 @@ public class MatchGroupChatController {
     }
 
     @GetMapping("/{matchGroupId}")
-    public List<ChatMessageDTO> getChatMessages(@PathVariable Long matchGroupId) {
+    public List<ChatMessageDTO> getChatMessages(@PathVariable("matchGroupId") Long matchGroupId) {
         return matchGroupChatService.getMessages(matchGroupId);
     }
 }

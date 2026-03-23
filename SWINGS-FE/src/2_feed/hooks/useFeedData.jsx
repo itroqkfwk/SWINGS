@@ -1,52 +1,79 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import feedApi from "../api/feedApi";
+import {
+  appendCommentToFeed,
+  normalizeComment,
+  processFeed,
+  processFeeds,
+  removeCommentFromFeed,
+  replaceFeedById,
+} from "../utils/feedUtils";
 
-/**
- * 소셜 페이지이랑 피드 페이지에서 공통으로 사용할 수 있는 피드 관련 훅
- * - 좋아요 토글, 댓글 추가/삭제, 피드 삭제, 피드 불러오기 기능 포함
- */
 const useFeedData = (viewedUserId, currentUser, setSelectedFeed) => {
   const [posts, setPosts] = useState([]);
 
+  const syncSelectedFeed = (updater) => {
+    if (!setSelectedFeed) {
+      return;
+    }
+
+    setSelectedFeed((previousFeed) => {
+      if (!previousFeed) {
+        return previousFeed;
+      }
+
+      return updater(previousFeed);
+    });
+  };
+
   const refreshFeeds = async () => {
-    if (!viewedUserId) return;
+    if (!viewedUserId) {
+      return;
+    }
+
     try {
       const feeds = await feedApi.getUserFeeds(viewedUserId);
-      setPosts(feeds);
-    } catch {
-      console.error("피드를 불러오지 못했습니다.");
+      setPosts(processFeeds(feeds));
+    } catch (error) {
+      console.error("피드를 불러오지 못했습니다.", error);
     }
   };
 
   const handleLikeToggle = async (feedId, isLiked) => {
     try {
-      const updated = isLiked
+      const updatedFeed = isLiked
         ? await feedApi.unlikeFeed(feedId, currentUser?.userId)
         : await feedApi.likeFeed(feedId, currentUser?.userId);
 
-      if (updated) {
-        setPosts((prev) =>
-          prev.map((f) => (f.feedId === feedId ? updated : f))
-        );
-        if (setSelectedFeed)
-          setSelectedFeed((prev) =>
-            prev && prev.feedId === feedId ? updated : prev
-          );
+      if (!updatedFeed) {
+        return null;
       }
-    } catch {
-      console.error("좋아요 처리 실패");
+
+      const normalizedFeed = processFeed(updatedFeed);
+
+      setPosts((previousPosts) => replaceFeedById(previousPosts, normalizedFeed));
+      syncSelectedFeed((previousFeed) =>
+        previousFeed.feedId === feedId ? normalizedFeed : previousFeed
+      );
+
+      return normalizedFeed;
+    } catch (error) {
+      console.error("좋아요 처리 실패:", error);
+      return null;
     }
   };
 
   const handleDelete = async (feedId) => {
     try {
-      console.log("🗑️ 삭제 요청 시작:", feedId);
       await feedApi.deleteFeed(feedId);
-      console.log("✅ 삭제 성공");
-      setPosts((prev) => prev.filter((post) => post.feedId !== feedId));
-    } catch (err) {
-      console.error("❌ 게시물 삭제 실패", err);
-      console.error("게시물 삭제 실패");
+      setPosts((previousPosts) =>
+        previousPosts.filter((post) => post.feedId !== feedId)
+      );
+      syncSelectedFeed((previousFeed) =>
+        previousFeed.feedId === feedId ? null : previousFeed
+      );
+    } catch (error) {
+      console.error("게시물 삭제 실패:", error);
     }
   };
 
@@ -57,51 +84,48 @@ const useFeedData = (viewedUserId, currentUser, setSelectedFeed) => {
         currentUser?.userId,
         content
       );
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.feedId === feedId
-            ? { ...p, comments: [...p.comments, newComment] }
-            : p
-        )
+
+      setPosts((previousPosts) =>
+        appendCommentToFeed(previousPosts, feedId, newComment)
       );
-      if (setSelectedFeed)
-        setSelectedFeed((prev) =>
-          prev && prev.feedId === feedId
-            ? { ...prev, comments: [...prev.comments, newComment] }
-            : prev
-        );
+      syncSelectedFeed((previousFeed) =>
+        previousFeed.feedId === feedId
+          ? {
+              ...previousFeed,
+              comments: [
+                ...(previousFeed.comments ?? []),
+                normalizeComment(newComment),
+              ],
+            }
+          : previousFeed
+      );
+
       return newComment;
-    } catch {
-      console.error("댓글 추가 실패");
+    } catch (error) {
+      console.error("댓글 추가 실패:", error);
+      return null;
     }
   };
 
   const handleCommentDelete = async (feedId, commentId) => {
     try {
       await feedApi.deleteComment(feedId, commentId);
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.feedId === feedId
-            ? {
-                ...p,
-                comments: p.comments.filter((c) => c.commentId !== commentId),
-              }
-            : p
-        )
+
+      setPosts((previousPosts) =>
+        removeCommentFromFeed(previousPosts, feedId, commentId)
       );
-      if (setSelectedFeed)
-        setSelectedFeed((prev) =>
-          prev && prev.feedId === feedId
-            ? {
-                ...prev,
-                comments: prev.comments.filter(
-                  (c) => c.commentId !== commentId
-                ),
-              }
-            : prev
-        );
-    } catch {
-      console.error("댓글 삭제 실패");
+      syncSelectedFeed((previousFeed) =>
+        previousFeed.feedId === feedId
+          ? {
+              ...previousFeed,
+              comments: (previousFeed.comments ?? []).filter(
+                (comment) => comment?.commentId !== commentId
+              ),
+            }
+          : previousFeed
+      );
+    } catch (error) {
+      console.error("댓글 삭제 실패:", error);
     }
   };
 

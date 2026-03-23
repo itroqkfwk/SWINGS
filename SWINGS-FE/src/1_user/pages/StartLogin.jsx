@@ -101,7 +101,7 @@ export default function StartLogin() {
 
     setTimeout(() => {
       navigate("/swings/feed");
-    }, 3600);
+    }, 900);
   };
 
   const handleGoogleSuccess = (result) => {
@@ -182,7 +182,7 @@ export default function StartLogin() {
               >
                 골프로 시작하는 가벼운 연결.
                 <br />
-                라운드 메이트를 찾고, 대화를 이어가고, 모임까지 한 번에 관리하세요.
+                라운드 메이트를 찾고, 대화를 이어가고, 모임까지 한 번에 관리해보세요.
               </motion.p>
             </div>
 

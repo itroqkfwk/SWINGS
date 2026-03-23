@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  Bell,
-  Heart,
-  LogOut,
-  Shield,
-  UserRound,
-} from "lucide-react";
+import { Bell, Heart, LogOut, Shield, UserRound } from "lucide-react";
 import { fetchUserData } from "../1_user/api/userApi";
 import { removeToken } from "../1_user/utils/userUtils";
 import { useAuth } from "../1_user/context/AuthContext";
@@ -57,34 +51,22 @@ export default function TopNavBar() {
   };
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="flex h-16 w-full items-center justify-between gap-3 px-3 sm:px-5 lg:px-8">
+    <header className="fixed top-3 z-50 w-full px-3 sm:px-5 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 rounded-[1.75rem] border border-white/70 bg-white/80 px-3 shadow-[0_20px_70px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-5">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Link
             to="/swings/feed"
-            className="shrink-0 text-xl font-black tracking-tight text-slate-900 transition hover:opacity-80"
+            className="shrink-0 rounded-full bg-slate-900 px-3 py-2 text-sm font-black tracking-[0.24em] text-white transition hover:bg-slate-800 sm:text-base"
           >
             SWINGS
           </Link>
-
-          {currentUser?.role === "admin" && (
-            <button
-              type="button"
-              onClick={() => navigate("/swings/admin")}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-700 transition hover:bg-amber-200 sm:px-3 sm:text-xs"
-            >
-              <Shield size={13} />
-              <span className="hidden sm:inline">관리자 페이지</span>
-              <span className="sm:hidden">관리자</span>
-            </button>
-          )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={() => navigate("/swings/points")}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-pink-100 text-pink-500 transition hover:bg-pink-200"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-rose-400 text-white shadow-[0_10px_30px_rgba(244,114,182,0.28)] transition hover:scale-[1.03]"
             aria-label="포인트"
           >
             <Heart className="h-5 w-5 fill-current" />
@@ -98,12 +80,14 @@ export default function TopNavBar() {
             <button
               type="button"
               onClick={() => navigate("/swings/notification")}
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
               aria-label="알림"
             >
               <Bell size={19} />
               {!isNotificationPage && unreadCount > 0 && (
-                <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500" />
+                <span className="absolute right-2 top-2 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
               )}
             </button>
 
@@ -115,7 +99,7 @@ export default function TopNavBar() {
               <button
                 type="button"
                 onClick={() => navigate("/swings/mypage")}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 md:hidden"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white text-slate-600 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 md:hidden"
                 aria-label="마이페이지"
               >
                 <UserRound size={18} />
@@ -124,18 +108,29 @@ export default function TopNavBar() {
               <button
                 type="button"
                 onClick={() => navigate("/swings/mypage")}
-                className="hidden items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 md:inline-flex"
+                className="hidden items-center gap-2 rounded-full border border-white/70 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 md:inline-flex"
               >
                 <UserRound size={16} />
                 <span className="max-w-28 truncate">{currentUser.username}</span>
               </button>
+
+              {currentUser.role === "admin" && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/swings/admin")}
+                  className="hidden items-center gap-1 rounded-full bg-amber-100 px-2.5 py-2 text-[11px] font-bold text-amber-700 transition hover:bg-amber-200 md:inline-flex"
+                >
+                  <Shield size={13} />
+                  <span>관리자</span>
+                </button>
+              )}
             </>
           )}
 
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/70 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500"
             aria-label="로그아웃"
           >
             <LogOut size={16} />

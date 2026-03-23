@@ -1,34 +1,45 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import Stomp from "stompjs";
 import { WS_BASE_URL } from "../../config/runtime";
 
 export const useMatchGroupChat = (matchGroupId, isAuthorized, currentUser) => {
-  const [stompClient, setStompClient] = useState(null);
+  const clientRef = useRef(null);
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
     if (!isAuthorized || !matchGroupId) return;
 
-    const socket = new SockJS(WS_BASE_URL);
-    const client = Stomp.over(socket);
+    const client = new Client({
+      webSocketFactory: () => new SockJS(WS_BASE_URL),
+      reconnectDelay: 5000,
+    });
 
-    client.connect({}, () => {
+    client.onConnect = () => {
       client.subscribe(`/topic/chat/${matchGroupId}`, (message) => {
         const received = JSON.parse(message.body);
         setMessages((prev) => [...prev, received]);
       });
-      setStompClient(client);
-    });
+    };
+
+    client.activate();
+    clientRef.current = client;
 
     return () => {
-      if (client.connected) client.disconnect();
+      client.deactivate();
+      clientRef.current = null;
     };
   }, [isAuthorized, matchGroupId]);
 
   const sendMessage = () => {
-    if (chatInput.trim() === "" || !stompClient || !currentUser) return;
+    if (
+      chatInput.trim() === "" ||
+      !clientRef.current?.connected ||
+      !currentUser
+    ) {
+      return;
+    }
 
     const chatMessage = {
       roomId: Number(matchGroupId),
@@ -37,11 +48,10 @@ export const useMatchGroupChat = (matchGroupId, isAuthorized, currentUser) => {
       sentAt: new Date().toISOString(),
     };
 
-    stompClient.send(
-      `/app/chat.send/${matchGroupId}`,
-      {},
-      JSON.stringify(chatMessage)
-    );
+    clientRef.current.publish({
+      destination: `/app/chat.send/${matchGroupId}`,
+      body: JSON.stringify(chatMessage),
+    });
     setChatInput("");
   };
 

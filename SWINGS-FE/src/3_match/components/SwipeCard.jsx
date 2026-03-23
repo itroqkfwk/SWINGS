@@ -1,81 +1,96 @@
 import React from "react";
 import TinderCard from "react-tinder-card";
-import defaultImg1 from "../../assets/default-profile.png";
-import { FaMars, FaVenus } from "react-icons/fa";
+import { FaCommentDots, FaMapMarkerAlt, FaMars, FaVenus } from "react-icons/fa";
+import defaultImg1 from "../../assets/default-profile-optimized.jpg";
 import { getProfileImageUrl } from "../../1_user/api/userApi";
 
+const regionToKorean = {
+  SEOUL: "서울",
+  BUSAN: "부산",
+  DAEGU: "대구",
+  INCHEON: "인천",
+  GWANGJU: "광주",
+  DAEJEON: "대전",
+  ULSAN: "울산",
+  JEJU: "제주",
+  ETC: "기타",
+  GYEONGGI: "경기",
+};
+
 const SwipeCard = ({ profile, onSwipe }) => {
-  if (!profile) return null;
+  if (!profile) {
+    return null;
+  }
 
-  const handleSwipe = (direction) => {
-    onSwipe(direction, profile);
-  };
-
-  // 🔠 활동 지역 영어 → 한글 매핑
-  const regionToKorean = {
-    SEOUL: "서울",
-    BUSAN: "부산",
-    DAEGU: "대구",
-    INCHEON: "인천",
-    GWANGJU: "광주",
-    DAEJEON: "대전",
-    ULSAN: "울산",
-    JEJU: "제주",
-    ETC: "기타",
-    GYEONGGI: "경기",
-  };
-
-  // ✅ 이미지가 있으면 경로 생성, 없으면 디폴트 이미지
-  const image = profile.userImg
-    ? getProfileImageUrl(profile.userImg)
-    : defaultImg1;
-
-  // ✅ 활동지역 한글 변환
-  const activityRegion = regionToKorean[profile.activityRegion] || "지역없음";
+  const image = profile.userImg ? getProfileImageUrl(profile.userImg) : defaultImg1;
+  const activityRegion = regionToKorean[profile.activityRegion] || "지역 미정";
+  const genderLabel = profile.gender === "male" ? "남성" : "여성";
 
   return (
-    <div className="flex justify-center w-full">
+    <div className="flex w-full justify-center">
       <TinderCard
         key={profile.username}
-        onSwipe={handleSwipe}
+        onSwipe={(direction) => onSwipe(direction, profile)}
         preventSwipe={["up", "down"]}
       >
-        <div className="w-full max-w-[90vw] sm:max-w-md bg-white/80 backdrop-blur-md border border-white/30 rounded-2xl shadow-lg p-4 mx-auto flex flex-col relative overflow-hidden">
-          {/* 프로필 이미지 */}
-          <div className="w-full max-h-[400px] mb-4 overflow-hidden rounded-xl">
-            <img
-              src={image}
-              alt="프로필"
-              className="w-full h-auto object-cover rounded-xl"
-            />
+        <article className="mx-auto flex w-full max-w-[36rem] flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.10)]">
+          <div className="relative aspect-[4/4.2] max-h-[30rem] min-h-[18rem] w-full overflow-hidden bg-slate-100">
+            <img src={image} alt="프로필 이미지" className="h-full w-full object-cover" />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
           </div>
 
-          {/* 유저 정보 */}
-          <div className="flex flex-col items-center px-2 text-center">
-            {/* 이름 + 성별 아이콘 라인 */}
-            <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-xl sm:text-2xl font-bold text-black">
-                {profile.name || "이름없음"}
-              </h2>
-              {/* 성별 아이콘을 옆으로 이동 */}
-              {profile.gender === "male" ? (
-                <FaMars className="text-blue-500 text-xl sm:text-2xl" />
-              ) : (
-                <FaVenus className="text-pink-500 text-xl sm:text-2xl" />
-              )}
+          <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 sm:py-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="truncate text-2xl font-black text-slate-900">
+                    {profile.name || "이름 없음"}
+                  </h2>
+                  {profile.gender === "male" ? (
+                    <FaMars className="shrink-0 text-lg text-sky-500" />
+                  ) : (
+                    <FaVenus className="shrink-0 text-lg text-pink-500" />
+                  )}
+                </div>
+                <p className="mt-1 truncate text-sm font-medium text-slate-500">
+                  @{profile.username || "user"}
+                </p>
+              </div>
+
+              <div className="rounded-full bg-pink-50 px-3 py-2 text-xs font-semibold text-pink-600">
+                TODAY PICK
+              </div>
             </div>
 
-            <p className="text-sm sm:text-base text-gray-500 mb-1">
-              @{profile.username || "유저명없음"}
-            </p>
-            <p className="text-sm sm:text-base  text-gray-500 mb-1">
-              활동 지역 : {activityRegion}
-            </p>
-            <p className="mt-3 text-sm sm:text-base  text-gray-800 bg-pink-100 px-4 py-2 rounded-xl shadow-inner leading-relaxed">
-              {profile.introduce || "소개글없음"}
-            </p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                <FaMapMarkerAlt className="text-pink-500" />
+                <span>{activityRegion}</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                {profile.gender === "male" ? (
+                  <FaMars className="text-sky-500" />
+                ) : (
+                  <FaVenus className="text-pink-500" />
+                )}
+                <span>{genderLabel}</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                <FaCommentDots className="text-amber-500" />
+                <span>대화 가능</span>
+              </div>
+            </div>
+
+            <div className="rounded-[1.5rem] bg-gradient-to-br from-pink-50 to-white px-4 py-4 shadow-inner">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pink-500">
+                Introduce
+              </p>
+              <p className="mt-2 line-clamp-5 text-sm leading-6 text-slate-700 sm:text-[15px]">
+                {profile.introduce || "아직 소개글이 없습니다."}
+              </p>
+            </div>
           </div>
-        </div>
+        </article>
       </TinderCard>
     </div>
   );

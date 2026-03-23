@@ -14,7 +14,7 @@ import {
 } from "../api/matchApi";
 import ConfirmModal from "../components/ConfirmModal";
 import { fetchUserData, getProfileImageUrl } from "../../1_user/api/userApi";
-import defaultImg from "../../assets/default-profile.png";
+import defaultImg from "../../assets/default-profile-optimized.jpg";
 
 export default function LikeListPage() {
   const [currentUser, setCurrentUser] = useState(null);

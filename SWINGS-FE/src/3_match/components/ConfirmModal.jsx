@@ -1,55 +1,67 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 
 function ConfirmModal({
-                          message,
-                          onConfirm,
-                          onCancel,
-                          cancelLabel = "취소",
-                          confirmLabel = "확인"
+  message,
+  onConfirm,
+  onCancel,
+  cancelLabel = "취소",
+  confirmLabel = "확인",
+}) {
+  const [submitting, setSubmitting] = useState(false);
 
-                      }) {
-    const [submitting, setSubmitting] = useState(false); // 중복 클릭 방지용 상태
+  const handleConfirm = async () => {
+    if (submitting) {
+      return;
+    }
 
-    const handleConfirm = async () => {
-        if (submitting) return;
-        setSubmitting(true);
-        try {
-            await onConfirm(); // 외부 confirm 실행
-        } catch (e) {
-            console.error("❌ ConfirmModal 에러", e);
-        } finally {
-            setSubmitting(false);
-        }
-    };
+    setSubmitting(true);
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-            <div className="bg-white p-6 rounded-xl shadow-md max-w-sm text-center">
-                <p className="text-gray-800 text-base mb-5 whitespace-pre-line">
-                    {message}
-                </p>
-                <div className="flex justify-center gap-4">
-                    <button
-                        onClick={onCancel}
-                        disabled={submitting}
-                        className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-full"
-                    >
-                        {cancelLabel}
-                    </button>
-                    <button
-                        onClick={handleConfirm}
-                        disabled={submitting}
-                        className={`px-4 py-2 rounded-full font-semibold ${
-                            submitting ? "bg-custom-pink cursor-not-allowed" : "bg-custom-pink"
-                        } text-white`}
-                    >
-                        {confirmLabel}
-                    </button>
+    try {
+      await onConfirm();
+    } catch (error) {
+      console.error("ConfirmModal error", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-                </div>
-            </div>
+  return (
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/35 px-4 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, y: 18, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 14, scale: 0.98 }}
+        transition={{ duration: 0.2 }}
+        className="w-full max-w-sm rounded-[1.75rem] border border-white/70 bg-white/88 p-6 text-center shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl"
+      >
+        <p className="whitespace-pre-line text-base font-medium leading-7 text-slate-700">
+          {message}
+        </p>
+
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button
+            onClick={onCancel}
+            disabled={submitting}
+            className="rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+          >
+            {cancelLabel}
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={submitting}
+            className={`rounded-2xl px-4 py-3 text-sm font-semibold text-white transition ${
+              submitting
+                ? "cursor-not-allowed bg-pink-300"
+                : "bg-gradient-to-r from-pink-500 to-rose-400 hover:brightness-105"
+            }`}
+          >
+            {confirmLabel}
+          </button>
         </div>
-    );
+      </motion.div>
+    </div>
+  );
 }
 
 export default ConfirmModal;

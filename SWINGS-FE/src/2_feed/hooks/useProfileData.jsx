@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import socialApi from "../api/socialApi";
 
 export const useProfileData = (userId, currentUser) => {
@@ -13,15 +13,14 @@ export const useProfileData = (userId, currentUser) => {
 
   const fetchProfileData = async () => {
     if (!userId || !currentUser) {
-      {
-        userId, currentUser;
-      }
       setLoading(false);
+      setError(null);
       return;
     }
 
     try {
       setLoading(true);
+      setError(null);
 
       const [
         profileData,
@@ -39,19 +38,22 @@ export const useProfileData = (userId, currentUser) => {
         socialApi.isFollowing(currentUser.userId, userId),
       ]);
 
-      setProfile(profileData);
+      const nextFollowers = followersData || [];
+      const nextFollowings = followingsData || [];
+
+      setProfile(profileData || null);
       setIntroduce(introduceData || "");
-      setFollowers(followersData || []);
-      setFollowings(followingsData || []);
+      setFollowers(nextFollowers);
+      setFollowings(nextFollowings);
       setStats({
         posts: feedCount || 0,
-        followers: followersData?.length || 0,
-        following: followingsData?.length || 0,
+        followers: nextFollowers.length || 0,
+        following: nextFollowings.length || 0,
       });
       setIsFollowing(followStatus === "팔로우 중입니다.");
     } catch (err) {
-      console.error("프로필 데이터 로딩 오류:", err);
-      setError("데이터를 불러오는 데 실패했습니다.");
+      console.error("프로필 데이터를 불러오지 못했습니다.", err);
+      setError("프로필 정보를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -67,10 +69,11 @@ export const useProfileData = (userId, currentUser) => {
 
   const saveIntroduce = async () => {
     if (!currentUser || !userId) return;
+
     try {
       await socialApi.updateIntroduce(userId, introduce);
     } catch (err) {
-      console.error("자기소개 업데이트 실패", err);
+      console.error("자기소개 저장 실패:", err);
     }
   };
 
