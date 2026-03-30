@@ -69,9 +69,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      strategies: "injectManifest",
-      srcDir: "src",
-      filename: "sw.js",
+      strategies: "generateSW",
       registerType: "autoUpdate",
       includeAssets: ["pwa3-192x192.png", "pwa3-512x512.png"],
       injectRegister: "auto",
