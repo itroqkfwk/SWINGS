@@ -1,0 +1,13 @@
+.git
+.gradle
+.settings
+bin
+build
+out
+*.iml
+*.log
+.classpath
+.project
+.env
+.env.*
+README.md
