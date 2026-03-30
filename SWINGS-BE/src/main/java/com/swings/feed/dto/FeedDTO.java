@@ -40,9 +40,11 @@ public class FeedDTO {
         this.liked = liked;
 
         // 댓글은 CommentEntity -> CommentDTO로 변환
-        this.comments = feedEntity.getComments().stream()
-                .map(comment -> new CommentDTO(comment))
-                .collect(Collectors.toList());
+        if (feedEntity.getComments() != null) {
+            this.comments = feedEntity.getComments().stream()
+                    .map(CommentDTO::new)
+                    .collect(Collectors.toList());
+        }
     }
 
     // FeedEntity만 받는 생성자 추가 (기본적으로 liked를 false로 설정)

@@ -1,40 +1,36 @@
 import { useEffect, useState } from "react";
-import { getPointBalance, getPointHistory } from "../api/userApi";
-import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { getPointBalance, getPointHistory } from "../api/userApi";
 
 export default function MyPointPage() {
   const [balance, setBalance] = useState(0);
   const [logs, setLogs] = useState([]);
   const navigate = useNavigate();
 
-  const loadData = async () => {
-    try {
-      const b = await getPointBalance();
-      const l = await getPointHistory();
-      setBalance(b);
-      setLogs(l);
-    } catch (err) {
-      console.error("포인트 불러오기 실패:", err);
-    }
-  };
-
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        const balanceValue = await getPointBalance();
+        const history = await getPointHistory();
+        setBalance(balanceValue);
+        setLogs(history);
+      } catch (error) {
+        console.error("포인트 정보를 불러오지 못했습니다.", error);
+      }
+    };
+
     loadData();
   }, []);
-
-  const goToChargePage = () => {
-    navigate("/swings/shop");
-  };
 
   const formatPrettyDate = (dateString) => {
     const date = new Date(dateString);
     return format(date, "M월 d일 a h:mm", { locale: ko });
   };
 
-  const groupedLogs = logs.reduce((acc, log) => {
+  const groupedLogs = logs.reduce((accumulator, log) => {
     const date = new Date(log.createdAt);
     const today = new Date();
     const yesterday = new Date();
@@ -49,9 +45,12 @@ export default function MyPointPage() {
       ? "어제"
       : format(date, "M월 d일", { locale: ko });
 
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(log);
-    return acc;
+    if (!accumulator[key]) {
+      accumulator[key] = [];
+    }
+
+    accumulator[key].push(log);
+    return accumulator;
   }, {});
 
   const totalSpent = logs.reduce(
@@ -60,91 +59,91 @@ export default function MyPointPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] px-5 pt-6 pb-24">
-      {/* ✅ 카드형 보유 코인 UI */}
+    <div className="min-h-screen bg-slate-50 px-5 pb-24 pt-6">
       <motion.section
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="bg-white shadow-md rounded-2xl p-5 mb-6"
+        transition={{ duration: 0.35 }}
+        className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-100"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-gray-500 mb-1">보유 중인 하트</p>
-            <h1 className="text-3xl font-bold text-black">
-              {balance.toLocaleString()} 하트
+            <p className="text-sm font-medium text-gray-500">보유 포인트</p>
+            <h1 className="mt-1 text-3xl font-bold text-gray-900">
+              {balance.toLocaleString()} 포인트
             </h1>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="mt-2 text-xs text-gray-400">
               지금까지{" "}
               <span className="font-semibold text-gray-700">
-                {totalSpent.toLocaleString()} 하트
-              </span>{" "}
-              사용했어요
+                {totalSpent.toLocaleString()} 포인트
+              </span>
+              를 사용했습니다.
             </p>
           </div>
+
           <button
-            onClick={goToChargePage}
-            className="bg-custom-coin text-white text-sm py-2 px-4 rounded-xl hover:opacity-90 active:scale-95 font-bold"
+            type="button"
+            onClick={() => navigate("/swings/shop")}
+            className="rounded-xl bg-custom-coin px-4 py-2 text-sm font-bold text-white transition hover:opacity-90"
           >
-            충전
+            충전하기
           </button>
         </div>
       </motion.section>
 
-      {/* ✅ 이벤트 배너 - 말풍선처럼 작게 */}
-      <section className="bg-[#fff3cd] text-[#856404] px-4 py-2.5 rounded-xl text-xs font-medium mb-6 shadow-sm flex items-center gap-2">
-        🎁 이벤트: 30하트 이상 충전 시 10% 더 드려요!
+      <section className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 ring-1 ring-amber-100">
+        이벤트 상품은 기본 포인트에 추가 적립 혜택이 포함되어 있습니다.
       </section>
 
-      <hr className="my-6 border-gray-200" />
-
-      {/* ✅ 사용 내역 */}
-      <section>
-        <h2 className="text-base font-bold text-gray-800 mb-4">최근 활동</h2>
+      <section className="mt-8">
+        <h2 className="mb-4 text-base font-bold text-gray-800">포인트 이용 내역</h2>
 
         {logs.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center mt-10">
-            아직 사용 내역이 없어요!
-          </p>
+          <div className="rounded-2xl bg-white px-4 py-10 text-center text-sm text-gray-400 shadow-sm ring-1 ring-gray-100">
+            아직 포인트 이용 내역이 없습니다.
+          </div>
         ) : (
           <div className="space-y-8">
-            {Object.entries(groupedLogs).map(([label, group], i) => (
-              <div key={i}>
-                <p className="text-xs text-gray-500 font-medium mb-2">
+            {Object.entries(groupedLogs).map(([label, group]) => (
+              <div key={label}>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
                   {label}
                 </p>
-                <ul className="space-y-4">
-                  <AnimatePresence>
-                    {group.map((log, idx) => (
-                      <motion.li
-                        key={idx}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="flex justify-between items-start"
-                      >
-                        <div>
-                          <p className="text-[15px] text-gray-900 font-medium">
-                            {log.description.includes("슈퍼챗")
-                              ? "슈퍼챗 사용"
-                              : log.description}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {formatPrettyDate(log.createdAt)}
-                          </p>
-                        </div>
-                        <p
-                          className={`text-[15px] font-semibold ${
-                            log.amount >= 0 ? "text-green-500" : "text-red-500"
-                          }`}
+                <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                  <ul className="space-y-4">
+                    <AnimatePresence>
+                      {group.map((log, index) => (
+                        <motion.li
+                          key={`${label}-${index}`}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ delay: index * 0.04 }}
+                          className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4 last:border-b-0 last:pb-0"
                         >
-                          {log.amount >= 0 ? `+${log.amount}` : log.amount} 하트
-                        </p>
-                      </motion.li>
-                    ))}
-                  </AnimatePresence>
-                </ul>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {log.description.includes("슈퍼챗")
+                                ? "슈퍼챗 사용"
+                                : log.description}
+                            </p>
+                            <p className="mt-1 text-xs text-gray-400">
+                              {formatPrettyDate(log.createdAt)}
+                            </p>
+                          </div>
+
+                          <p
+                            className={`shrink-0 text-sm font-bold ${
+                              log.amount >= 0 ? "text-green-600" : "text-rose-500"
+                            }`}
+                          >
+                            {log.amount >= 0 ? `+${log.amount}` : log.amount} 포인트
+                          </p>
+                        </motion.li>
+                      ))}
+                    </AnimatePresence>
+                  </ul>
+                </div>
               </div>
             ))}
           </div>

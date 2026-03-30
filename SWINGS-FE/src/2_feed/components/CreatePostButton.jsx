@@ -1,12 +1,14 @@
 import React from "react";
 import { PenSquare } from "lucide-react";
 
-// 게시물 작성 버튼
-const CreatePostButton = ({ onClick }) => {
+const CreatePostButton = ({
+  onClick,
+  customPosition = "bottom-24 right-6",
+}) => {
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-24 right-6 outline-none focus:outline-none  bg-custom-pink text-white rounded-full p-3 shadow-lg transition-all duration-300 z-[60] flex items-center justify-center"
+      className={`fixed ${customPosition} z-[60] flex items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-orange-400 p-3 text-white shadow-[0_18px_40px_rgba(244,63,94,0.35)] transition-all duration-300 hover:scale-[1.03] hover:brightness-105 focus:outline-none`}
       aria-label="게시물 작성"
     >
       <PenSquare size={20} />

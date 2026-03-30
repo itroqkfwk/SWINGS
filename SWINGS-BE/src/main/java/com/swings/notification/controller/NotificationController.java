@@ -28,7 +28,7 @@ public class NotificationController {
 
     // 전체 알림 내역 조회
     @GetMapping("/list")
-    public List<NotificationDTO> getAllNotifications(@RequestParam String receiver) {
+    public List<NotificationDTO> getAllNotifications(@RequestParam("receiver") String receiver) {
         return notificationService.getNotificationsByReceiver(receiver).stream()
                 .map(NotificationDTO::fromEntity)
                 .collect(Collectors.toList());
@@ -36,14 +36,14 @@ public class NotificationController {
 
     // 알림 읽음 처리
     @PutMapping("/read/{notificationId}")
-    public ResponseEntity<String> markAsRead(@PathVariable Long notificationId) {
+    public ResponseEntity<String> markAsRead(@PathVariable("notificationId") Long notificationId) {
         notificationService.markAsRead(notificationId);
         return ResponseEntity.ok("알림 읽음 처리 완료");
     }
 
     // 알림 삭제
     @DeleteMapping("/delete/{notificationId}")
-    public ResponseEntity<String> deleteNotification(@PathVariable Long notificationId) {
+    public ResponseEntity<String> deleteNotification(@PathVariable("notificationId") Long notificationId) {
         notificationService.deleteNotification(notificationId);
         return ResponseEntity.ok("알림 삭제 완료");
     }

@@ -1,50 +1,65 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import Stomp from "stompjs";
+import { WS_BASE_URL } from "../../config/runtime";
 
 export const useMatchGroupChat = (matchGroupId, isAuthorized, currentUser) => {
-    const [stompClient, setStompClient] = useState(null);
-    const [chatInput, setChatInput] = useState("");
-    const [messages, setMessages] = useState([]);
+  const clientRef = useRef(null);
+  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState([]);
 
-    useEffect(() => {
-        if (!isAuthorized || !matchGroupId) return;
+  useEffect(() => {
+    if (!isAuthorized || !matchGroupId) return;
 
-        const socket = new SockJS("http://localhost:8090/swings/ws");
-        const client = Stomp.over(socket);
+    const client = new Client({
+      webSocketFactory: () => new SockJS(WS_BASE_URL),
+      reconnectDelay: 5000,
+    });
 
-        client.connect({}, () => {
-            client.subscribe(`/topic/chat/${matchGroupId}`, (message) => {
-                const received = JSON.parse(message.body);
-                setMessages((prev) => [...prev, received]);
-            });
-            setStompClient(client);
-        });
-
-        return () => {
-            if (client.connected) client.disconnect();
-        };
-    }, [isAuthorized, matchGroupId]);
-
-    const sendMessage = () => {
-        if (chatInput.trim() === "" || !stompClient || !currentUser) return;
-
-        const chatMessage = {
-            roomId: Number(matchGroupId),
-            sender: currentUser.username,
-            content: chatInput,
-            sentAt: new Date().toISOString(),
-        };
-
-        stompClient.send(`/app/chat.send/${matchGroupId}`, {}, JSON.stringify(chatMessage));
-        setChatInput("");
+    client.onConnect = () => {
+      client.subscribe(`/topic/chat/${matchGroupId}`, (message) => {
+        const received = JSON.parse(message.body);
+        setMessages((prev) => [...prev, received]);
+      });
     };
 
-    return {
-        chatInput,
-        setChatInput,
-        messages,
-        setMessages,
-        sendMessage,
+    client.activate();
+    clientRef.current = client;
+
+    return () => {
+      client.deactivate();
+      clientRef.current = null;
     };
+  }, [isAuthorized, matchGroupId]);
+
+  const sendMessage = () => {
+    if (
+      chatInput.trim() === "" ||
+      !clientRef.current?.connected ||
+      !currentUser
+    ) {
+      return;
+    }
+
+    const chatMessage = {
+      roomId: Number(matchGroupId),
+      sender: currentUser.username,
+      content: chatInput,
+      sentAt: new Date().toISOString(),
+    };
+
+    clientRef.current.publish({
+      destination: `/app/chat.send/${matchGroupId}`,
+      body: JSON.stringify(chatMessage),
+    });
+    setChatInput("");
+  };
+
+  return {
+    chatInput,
+    setChatInput,
+    messages,
+    setMessages,
+    sendMessage,
+  };
 };

@@ -24,12 +24,23 @@ const useNewPostForm = () => {
     }
   };
 
+  const clearImage = () => {
+    setNewPostImage(null);
+    setImagePreview(null);
+
+    const fileInput = document.getElementById("new-feed-image-upload");
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  };
+
   return {
     newPostContent,
     setNewPostContent,
     newPostImage,
     imagePreview,
     handleImageChange,
+    clearImage,
     reset,
   };
 };

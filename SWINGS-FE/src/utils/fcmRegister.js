@@ -1,51 +1,57 @@
 import { getToken } from "firebase/messaging";
-import { messaging } from "./firebase";
+import { API_BASE_URL } from "../config/runtime";
+import { isFirebaseConfigured, messagingPromise } from "./firebase";
 
 export const registerFCM = async (username) => {
-    console.log("📣 registerFCM 실행됨 - 사용자:", username);
+  console.log("registerFCM called for user:", username);
 
-    if (!("serviceWorker" in navigator)) {
-        console.warn("❌ 이 브라우저는 serviceWorker를 지원하지 않습니다.");
-        return;
+  if (!isFirebaseConfigured) {
+    console.warn("Firebase config is incomplete. Skipping FCM registration.");
+    return;
+  }
+
+  if (!("serviceWorker" in navigator)) {
+    console.warn("This browser does not support service workers.");
+    return;
+  }
+
+  const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+  if (!vapidKey) {
+    console.warn("Firebase VAPID key is missing. Skipping FCM registration.");
+    return;
+  }
+
+  try {
+    const messaging = await messagingPromise;
+    if (!messaging) {
+      console.warn("Firebase messaging is unavailable. Skipping FCM registration.");
+      return;
     }
 
-    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-
-    try {
-        // 1. 알림 권한 요청
-        const permission = await Notification.requestPermission();
-        if (permission !== "granted") {
-            console.warn("❌ 알림 권한이 거부되었습니다.");
-            return;
-        }
-
-        // 2. Service Worker 등록
-        const registration = await navigator.serviceWorker.register("/sw.js");
-
-        // 3. FCM 토큰 발급
-        const token = await getToken(messaging, {
-            vapidKey,
-            serviceWorkerRegistration: registration,
-        });
-
-        if (!token) {
-            console.warn("⚠️ FCM 토큰이 null입니다.");
-            return;
-        }
-
-        console.log("📲 FCM Token 발급 성공:", token);
-
-        // 4. 서버로 토큰 전송
-        const response = await fetch("http://localhost:8090/swings/fcm/register-token", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ token, username }),
-        });
-
-        const result = await response.text();
-    } catch (err) {
-        console.error("❌ FCM 등록 실패:", err.message);
-        console.error(err);
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      console.warn("Notification permission was not granted.");
+      return;
     }
+
+    const registration = await navigator.serviceWorker.register("/sw.js");
+    const token = await getToken(messaging, {
+      vapidKey,
+      serviceWorkerRegistration: registration,
+    });
+
+    if (!token) {
+      console.warn("FCM token was not issued.");
+      return;
+    }
+
+    await fetch(`${API_BASE_URL}/fcm/register-token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ token, username }),
+    });
+  } catch (error) {
+    console.error("FCM registration failed:", error);
+  }
 };

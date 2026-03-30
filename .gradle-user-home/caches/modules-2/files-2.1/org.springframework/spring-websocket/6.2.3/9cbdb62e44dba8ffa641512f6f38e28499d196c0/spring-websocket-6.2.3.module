@@ -1,0 +1,106 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.springframework",
+    "module": "spring-websocket",
+    "version": "6.2.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.12"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.springframework",
+          "module": "spring-context",
+          "version": {
+            "requires": "6.2.3"
+          }
+        },
+        {
+          "group": "org.springframework",
+          "module": "spring-core",
+          "version": {
+            "requires": "6.2.3"
+          }
+        },
+        {
+          "group": "org.springframework",
+          "module": "spring-web",
+          "version": {
+            "requires": "6.2.3"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "spring-websocket-6.2.3.jar",
+          "url": "spring-websocket-6.2.3.jar",
+          "size": 444178,
+          "sha512": "c46372cdc4929faaad9b5ae3f1bfdca1c591b63642c79dc83ba4178d26bf272ae4255bd99411cb8cd8a73b9dcc87b8acbad9cc66894af94a7e410c53838c6574",
+          "sha256": "f260fe8f77d870fac2d4e2375339cba2704a297dfb1c5c5001262dc8c1562582",
+          "sha1": "77eba51cffe04c7e8abca5a37b29675415b5794a",
+          "md5": "e75ae95ca6c1f31e2689189ad4050de0"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.springframework",
+          "module": "spring-context",
+          "version": {
+            "requires": "6.2.3"
+          }
+        },
+        {
+          "group": "org.springframework",
+          "module": "spring-core",
+          "version": {
+            "requires": "6.2.3"
+          }
+        },
+        {
+          "group": "org.springframework",
+          "module": "spring-web",
+          "version": {
+            "requires": "6.2.3"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "spring-websocket-6.2.3.jar",
+          "url": "spring-websocket-6.2.3.jar",
+          "size": 444178,
+          "sha512": "c46372cdc4929faaad9b5ae3f1bfdca1c591b63642c79dc83ba4178d26bf272ae4255bd99411cb8cd8a73b9dcc87b8acbad9cc66894af94a7e410c53838c6574",
+          "sha256": "f260fe8f77d870fac2d4e2375339cba2704a297dfb1c5c5001262dc8c1562582",
+          "sha1": "77eba51cffe04c7e8abca5a37b29675415b5794a",
+          "md5": "e75ae95ca6c1f31e2689189ad4050de0"
+        }
+      ]
+    }
+  ]
+}

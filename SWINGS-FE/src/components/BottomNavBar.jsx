@@ -6,45 +6,68 @@ import { AiOutlineInstagram } from "react-icons/ai";
 import { HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
 
 const navItems = [
-  { to: "/swings/matchgroup", label: "조인", icon: Handshake },
+  { to: "/swings/matchgroup", label: "모임", icon: Handshake },
   { to: "/swings/match", label: "소개팅", icon: FaHeartCircleCheck },
   { to: "/swings/feed", label: "피드", icon: AiOutlineInstagram },
   { to: "/swings/chat", label: "채팅", icon: HiOutlineChatBubbleLeftRight },
-  { to: "/swings/social", label: "마이페이지", icon: CircleUser },
+  { to: "/swings/social", label: "마이", icon: CircleUser },
 ];
+
+function isActivePath(pathname, target) {
+  if (target === "/swings/feed") {
+    return pathname === target || pathname.startsWith("/swings/profile/");
+  }
+
+  return pathname === target || pathname.startsWith(`${target}/`);
+}
 
 export default function BottomNavBar() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-md z-50">
-      <div className="flex justify-between items-center h-16 text-xs text-gray-500">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.to;
-          const Icon = item.icon;
+    <div className="pointer-events-none fixed bottom-3 left-0 z-50 w-full px-3 sm:px-5 lg:px-8">
+      <nav className="pointer-events-auto mx-auto max-w-3xl rounded-[1.75rem] border border-white/70 bg-white/80 px-2 py-2 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+        <div className="grid grid-cols-5 gap-1 text-[11px] text-slate-500">
+          {navItems.map((item) => {
+            const active = isActivePath(location.pathname, item.to);
+            const Icon = item.icon;
 
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`relative w-[20%] flex flex-col items-center justify-center gap-[4px] transition-colors duration-200 ${
-                isActive ? "text-[#2E384D] font-semibold" : "text-gray-400"
-              }`}
-            >
-              <motion.div
-                animate={{ scale: isActive ? 1.2 : 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="group relative flex flex-col items-center justify-center rounded-2xl px-2 py-2.5"
               >
-                <Icon className="w-7 h-7 text-current" />
-              </motion.div>
+                {active && (
+                  <motion.div
+                    layoutId="bottom-nav-pill"
+                    className="absolute inset-0 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-400 shadow-[0_12px_30px_rgba(244,114,182,0.28)]"
+                    transition={{ type: "spring", stiffness: 280, damping: 24 }}
+                  />
+                )}
 
-              <span className="text-[12px] leading-tight text-center">
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+                <motion.div
+                  animate={{ scale: active ? 1.08 : 1, y: active ? -1 : 0 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 18 }}
+                  className={`relative z-10 flex items-center justify-center ${
+                    active ? "text-white" : "text-slate-400 group-hover:text-slate-600"
+                  }`}
+                >
+                  <Icon className="h-5 w-5 sm:h-[1.35rem] sm:w-[1.35rem]" />
+                </motion.div>
+
+                <span
+                  className={`relative z-10 mt-1 text-[10px] font-semibold leading-none ${
+                    active ? "text-white" : "text-slate-400 group-hover:text-slate-600"
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 }

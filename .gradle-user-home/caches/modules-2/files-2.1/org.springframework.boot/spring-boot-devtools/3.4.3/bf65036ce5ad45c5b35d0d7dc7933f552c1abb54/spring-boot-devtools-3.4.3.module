@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.springframework.boot",
+    "module": "spring-boot-devtools",
+    "version": "3.4.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.12.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot",
+          "version": {
+            "requires": "3.4.3"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-autoconfigure",
+          "version": {
+            "requires": "3.4.3"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "spring-boot-devtools-3.4.3.jar",
+          "url": "spring-boot-devtools-3.4.3.jar",
+          "size": 203100,
+          "sha512": "6d010369ce9e8605ecb4f22328eec07bd92d19d1e35e9a4e9707d44ee81edefe906d4ea803e806e6e69eb29e7c4ac9ed02aff766008344765fcb8b9a7e97a278",
+          "sha256": "b8bd6f8ee7448b64ccdcfd4dd49b09a779c4a9d4fd323537666c1ca2cd57ec0b",
+          "sha1": "2ff7eda01cc1f445ddf1cc4a18fc4950634dbb33",
+          "md5": "0ae52aedd345f98137375da68e0720c6"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot",
+          "version": {
+            "requires": "3.4.3"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-autoconfigure",
+          "version": {
+            "requires": "3.4.3"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "spring-boot-devtools-3.4.3.jar",
+          "url": "spring-boot-devtools-3.4.3.jar",
+          "size": 203100,
+          "sha512": "6d010369ce9e8605ecb4f22328eec07bd92d19d1e35e9a4e9707d44ee81edefe906d4ea803e806e6e69eb29e7c4ac9ed02aff766008344765fcb8b9a7e97a278",
+          "sha256": "b8bd6f8ee7448b64ccdcfd4dd49b09a779c4a9d4fd323537666c1ca2cd57ec0b",
+          "sha1": "2ff7eda01cc1f445ddf1cc4a18fc4950634dbb33",
+          "md5": "0ae52aedd345f98137375da68e0720c6"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "spring-boot-devtools-3.4.3-javadoc.jar",
+          "url": "spring-boot-devtools-3.4.3-javadoc.jar",
+          "size": 345151,
+          "sha512": "a30982921e06d0acbd46a67f8c3bbcf6a0a860355464b458a371f56355a67eff7105290958bf2827d405b1065249f88a1393376d5c0fb1b1818f3d4f01a2dbb1",
+          "sha256": "687d52ac81795adfa868a9bb34932227e908001ca9132fe992fd8b3f94d6f3ec",
+          "sha1": "d8a5c3e23da0cc8fa4baced38efe37d9bff1d0ab",
+          "md5": "5bc6c501d59482238c4c38d9a963db76"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "spring-boot-devtools-3.4.3-sources.jar",
+          "url": "spring-boot-devtools-3.4.3-sources.jar",
+          "size": 139124,
+          "sha512": "67b836e9e7388cc6c11a21bf85cec148389e0936d294e596662a6f08b78e322a6c1f42fef887d1adb4ab15d231b6163a90c4a89169c512f8b853f4f0ade26324",
+          "sha256": "ca5ce72473f31219da6fe03971fd54a3808119c457581291f0248da2318bb96b",
+          "sha1": "08f12f7f9a9e279bd52ec0d0ee377240b74601fb",
+          "md5": "4e0e2033f65546dfcd28c775576b888a"
+        }
+      ]
+    }
+  ]
+}

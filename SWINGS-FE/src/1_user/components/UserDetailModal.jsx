@@ -16,46 +16,50 @@ export default function UserDetailModal({ username, onClose, onUpdated }) {
         setUser(data);
         setRole(data.role);
       } catch (error) {
-        console.error("유저 정보를 불러오는 데 실패했습니다.", error);
+        console.error("유저 상세 정보를 불러오지 못했습니다.", error);
       }
     })();
   }, [username]);
 
-  if (!user) return null;
+  if (!user) {
+    return null;
+  }
 
   const handleRoleUpdate = async () => {
     try {
       await updateUserRole(username, role);
-      alert("✅ 역할이 성공적으로 변경되었습니다.");
+      alert("권한이 성공적으로 변경되었습니다.");
       onUpdated();
     } catch (error) {
-      alert("❌ 역할 변경 중 오류 발생");
+      alert("권한 변경 중 오류가 발생했습니다.");
     }
   };
 
   const handleDelete = async () => {
-    if (window.confirm("정말 이 유저를 탈퇴시키겠습니까?")) {
-      try {
-        await deleteUserByAdmin(username);
-        alert("✅ 유저가 탈퇴 처리되었습니다.");
-        onUpdated();
-      } catch (error) {
-        alert("❌ 유저 탈퇴 중 오류 발생");
-      }
+    if (!window.confirm("정말 이 유저를 탈퇴 처리하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      await deleteUserByAdmin(username);
+      alert("유저 탈퇴 처리가 완료되었습니다.");
+      onUpdated();
+    } catch (error) {
+      alert("유저 탈퇴 처리 중 오류가 발생했습니다.");
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+      <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-lg">
         <button
-          className="absolute top-2 right-3 text-gray-500 hover:text-black"
+          className="absolute right-3 top-3 text-gray-500 hover:text-black"
           onClick={onClose}
         >
-          ✕
+          닫기
         </button>
 
-        <h2 className="text-xl font-bold mb-4">유저 상세정보</h2>
+        <h2 className="mb-4 text-xl font-bold text-slate-900">유저 상세정보</h2>
 
         <div className="space-y-2 text-sm text-gray-700">
           <p>
@@ -71,30 +75,30 @@ export default function UserDetailModal({ username, onClose, onUpdated }) {
             <strong>직업:</strong> {user.job}
           </p>
           <p>
-            <strong>골프 스킬:</strong> {user.golfSkill}
+            <strong>골프 실력:</strong> {user.golfSkill}
           </p>
           <p>
-            <strong>역할:</strong> {user.role}
+            <strong>권한:</strong> {user.role}
           </p>
         </div>
 
         <div className="mt-4">
-          <label className="block mb-1 text-sm font-medium text-gray-700">
-            역할 변경
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            권한 변경
           </label>
           <select
             value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="border p-2 rounded w-full text-black"
+            onChange={(event) => setRole(event.target.value)}
+            className="w-full rounded border p-2 text-black"
           >
             <option value="player">player</option>
             <option value="admin">admin</option>
           </select>
           <button
             onClick={handleRoleUpdate}
-            className="mt-2 px-4 py-1 bg-green-500 text-white rounded"
+            className="mt-2 rounded bg-green-500 px-4 py-1 text-white"
           >
-            역할 변경
+            권한 변경
           </button>
         </div>
 
@@ -102,7 +106,7 @@ export default function UserDetailModal({ username, onClose, onUpdated }) {
 
         <button
           onClick={handleDelete}
-          className="w-full bg-red-500 text-white py-2 rounded"
+          className="w-full rounded bg-red-500 py-2 text-white"
         >
           강제 탈퇴
         </button>

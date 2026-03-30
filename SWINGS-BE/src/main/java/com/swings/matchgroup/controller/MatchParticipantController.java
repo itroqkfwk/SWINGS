@@ -62,7 +62,7 @@ public class MatchParticipantController {
 
     // 확정된 참가자 조회 (ACCEPTED)
     @GetMapping("/accepted/{matchGroupId}")
-    public ResponseEntity<List<MatchParticipantDTO>> getAcceptedParticipants(@PathVariable Long matchGroupId) {
+    public ResponseEntity<List<MatchParticipantDTO>> getAcceptedParticipants(@PathVariable("matchGroupId") Long matchGroupId) {
         return ResponseEntity.ok(
                 matchParticipantService.getAcceptedParticipants(matchGroupId)
         );
@@ -70,7 +70,7 @@ public class MatchParticipantController {
 
     // 신청중인 참가자 조회 (PENDING)
     @GetMapping("/pending/{matchGroupId}")
-    public ResponseEntity<List<MatchParticipantDTO>> getPendingParticipants(@PathVariable Long matchGroupId) {
+    public ResponseEntity<List<MatchParticipantDTO>> getPendingParticipants(@PathVariable("matchGroupId") Long matchGroupId) {
         return ResponseEntity.ok(
                 matchParticipantService.getPendingParticipants(matchGroupId)
         );
@@ -84,7 +84,7 @@ public class MatchParticipantController {
 
     // 확정된 인원 수 조회
     @GetMapping("/accepted/count/{matchGroupId}")
-    public ResponseEntity<Integer> getAcceptedCount(@PathVariable Long matchGroupId) {
+    public ResponseEntity<Integer> getAcceptedCount(@PathVariable("matchGroupId") Long matchGroupId) {
         return ResponseEntity.ok(matchParticipantService.countAcceptedParticipants(matchGroupId));
     }
 
@@ -100,8 +100,8 @@ public class MatchParticipantController {
     // 참가 가능 여부 확인
     @GetMapping("/check/{matchGroupId}/{userId}")
     public ResponseEntity<Boolean> canUserJoin(
-            @PathVariable Long matchGroupId,
-            @PathVariable Long userId
+            @PathVariable("matchGroupId") Long matchGroupId,
+            @PathVariable("userId") Long userId
     ) {
         boolean allowed = matchParticipantService.canUserJoinGroup(matchGroupId, userId);
         return ResponseEntity.ok(allowed);

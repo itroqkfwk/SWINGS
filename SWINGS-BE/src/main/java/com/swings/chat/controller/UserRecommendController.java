@@ -14,14 +14,14 @@ public class UserRecommendController {
 
     // 무작위 추천 유저 조회 API
     @GetMapping("/{username}/recommend")
-    public ResponseEntity<UserSelectDTO> getRandomUser(@PathVariable String username) {
+    public ResponseEntity<UserSelectDTO> getRandomUser(@PathVariable("username") String username) {
         UserSelectDTO recommendedUser = userRecommendService.getRandomUser(username);
         return ResponseEntity.ok(recommendedUser);
     }
 
     // 싫어요 후 새로운 유저 추천 API
     @GetMapping("/{username}/next")
-    public ResponseEntity<UserSelectDTO> getNextUser(@PathVariable String username, @RequestParam String excludedUsername) {
+    public ResponseEntity<UserSelectDTO> getNextUser(@PathVariable("username") String username, @RequestParam("excludedUsername") String excludedUsername) {
         UserSelectDTO recommendedUser = userRecommendService.getNextRandomUser(username, excludedUsername);
         return ResponseEntity.ok(recommendedUser);
     }

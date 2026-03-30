@@ -24,14 +24,14 @@ public class ChatController {
     }
 
     @GetMapping("/messages/{roomId}")
-    public ResponseEntity<List<ChatMessageDTO>> getMessages(@PathVariable Long roomId) {
+    public ResponseEntity<List<ChatMessageDTO>> getMessages(@PathVariable("roomId") Long roomId) {
         List<ChatMessageDTO> messages = chatMessageService.getMessageDTOsByRoomId(roomId);
         return ResponseEntity.ok(messages);
     }
     @PostMapping("/messages/read")
     public ResponseEntity<Void> markMessagesAsRead(
-            @RequestParam Long roomId,
-            @RequestParam String username
+            @RequestParam("roomId") Long roomId,
+            @RequestParam("username") String username
     ) {
         chatMessageService.markMessagesAsRead(roomId, username);
         return ResponseEntity.ok().build();

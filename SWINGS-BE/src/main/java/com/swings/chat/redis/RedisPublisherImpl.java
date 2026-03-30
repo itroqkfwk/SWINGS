@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swings.chat.dto.ChatMessageDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@ConditionalOnProperty(name = "app.redis.enabled", havingValue = "true")
 public class RedisPublisherImpl implements RedisPublisher {
 
     private final RedisTemplate<String, Object> chatRedisTemplate;

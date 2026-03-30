@@ -78,6 +78,11 @@ export const updateProfileImage = async (imageFile) => {
   return response.data;
 };
 
+export const deleteProfileImage = async () => {
+  const response = await axios.delete("/users/me/profile-image");
+  return response.data;
+};
+
 /**
  * 비밀번호 변경 요청
  * @param {string} username

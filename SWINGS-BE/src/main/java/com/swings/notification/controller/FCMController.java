@@ -14,7 +14,7 @@ public class FCMController {
     private final UserService userService;
 
     @PostMapping("/register-token")
-    public ResponseEntity<String> registerFcmToken(@RequestParam String username, @RequestBody String token) {
+    public ResponseEntity<String> registerFcmToken(@RequestParam("username") String username, @RequestBody String token) {
         System.out.println("[FCMController] 토큰 등록 요청: " + username + " → " + token);
 
         UserEntity currentUser = userService.getUserByUsername(username);
