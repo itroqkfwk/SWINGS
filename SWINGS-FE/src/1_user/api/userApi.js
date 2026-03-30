@@ -1,5 +1,6 @@
 // src/1_user/api/auth.js
 import axios from "./axiosInstance";
+import { API_BASE_URL } from "../../config/runtime";
 
 /**
  * 로그인 API 요청 함수
@@ -55,9 +56,7 @@ export const updateUserInfo = async (username, updatedFields) => {
 // 프로필 이미지 가져오기
 export const getProfileImageUrl = (filename) => {
   if (!filename) return null;
-  const baseUrl =
-    import.meta.env.VITE_API_BASE || "http://localhost:8090/swings";
-  return `${baseUrl}/users/me/profile-image/${filename}`;
+  return `${API_BASE_URL}/users/me/profile-image/${filename}`;
 };
 
 // 프로필 이미지 수정
