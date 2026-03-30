@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { FaBolt, FaHeart, FaThumbsUp } from "react-icons/fa";
-import { IoIosArrowBack } from "react-icons/io";
+import { FaBolt, FaThumbsUp } from "react-icons/fa";
 import axios from "../../1_user/api/axiosInstance";
 import SwipeCard from "../components/SwipeCard";
 import SwipeModals from "../components/SwipeModals";
@@ -53,9 +52,7 @@ function SwipePage() {
     }
 
     try {
-      await axios.post(
-        `/api/dislikes/${currentUser.username}/${swipedProfile.username}`
-      );
+      await axios.post(`/api/dislikes/${currentUser.username}/${swipedProfile.username}`);
       fetchRecommendedUser(currentUser.username);
     } catch (error) {
       console.error("스와이프 처리 실패:", error);
@@ -148,11 +145,11 @@ function SwipePage() {
   }
 
   return (
-    <div className="px-3 py-4 sm:px-5 lg:px-8">
+    <div className="px-2 py-2 sm:px-5 lg:px-8">
       <Toaster />
 
-      <div className="mx-auto grid max-w-[1380px] gap-5 xl:grid-cols-[280px_minmax(360px,540px)_320px]">
-        <aside className="hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] xl:flex xl:flex-col xl:justify-between">
+      <div className="mx-auto grid max-w-[1520px] gap-4 xl:grid-cols-[minmax(260px,1fr)_minmax(380px,560px)_minmax(260px,1fr)] xl:items-start">
+        <aside className="hidden w-full max-w-[300px] rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] xl:flex xl:flex-col xl:justify-between xl:justify-self-end">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-pink-500">
               SWINGS Match
@@ -163,72 +160,53 @@ function SwipePage() {
               오늘의 소개팅
             </h1>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              프로필을 천천히 보고 호감을 보내거나, 슈퍼챗을 사용해 바로 대화를 시작할 수
+              프로필을 천천히 보고 호감을 보내거나, 슈퍼챗으로 바로 대화를 시작할 수
               있습니다.
             </p>
           </div>
 
           <div className="grid gap-3">
             <div className="rounded-[1.5rem] bg-slate-900 px-5 py-4 text-white">
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-300">
-                Free Likes
-              </p>
+              <p className="text-xs uppercase tracking-[0.24em] text-slate-300">Free Likes</p>
               <p className="mt-3 text-3xl font-bold">{remainingLikes}</p>
               <p className="mt-1 text-sm text-slate-300">오늘 남은 무료 호감</p>
             </div>
             <div className="rounded-[1.5rem] bg-pink-50 px-5 py-4 text-slate-800">
-              <p className="text-xs uppercase tracking-[0.24em] text-pink-500">
-                Reset In
-              </p>
+              <p className="text-xs uppercase tracking-[0.24em] text-pink-500">Reset In</p>
               <p className="mt-3 text-2xl font-bold">{remainingTime}</p>
               <p className="mt-1 text-sm text-slate-500">다음 초기화까지</p>
             </div>
           </div>
         </aside>
 
-        <section className="rounded-[2rem] border border-slate-200 bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-4">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <button
-              onClick={() => navigate("/swings/feed")}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-pink-200 hover:text-pink-500"
-              aria-label="뒤로가기"
-            >
-              <IoIosArrowBack size={24} />
-            </button>
-
-            <div className="min-w-0 flex-1 text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pink-500">
+        <section className="w-full rounded-[1.4rem] border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-4 xl:justify-self-center">
+          <div className="relative mb-2 flex items-center justify-end sm:justify-between">
+            <div className="absolute left-1/2 min-w-0 -translate-x-1/2 text-center sm:static sm:left-auto sm:flex-1 sm:translate-x-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-pink-500">
                 Daily Match
               </p>
-              <h2 className="mt-1 truncate text-xl font-black text-slate-900 sm:text-2xl">
-                오늘의 추천 카드
+              <h2 className="mt-0.5 hidden truncate text-base font-black text-slate-900 sm:block sm:text-2xl">
+                오늘의 추천 프로필
               </h2>
             </div>
 
-            <div className="rounded-full bg-slate-100 px-3 py-2 text-right">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 shadow-sm sm:bg-slate-100 sm:px-2 sm:py-1">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-pink-400 sm:text-slate-400">
                 Likes
-              </p>
-              <p className="text-sm font-bold text-slate-900">{remainingLikes}</p>
+              </span>
+              <span className="text-[11px] font-bold text-slate-900 sm:text-xs">
+                {remainingLikes}
+              </span>
             </div>
           </div>
 
-          <div className="mb-4 grid grid-cols-2 gap-3 xl:hidden">
-            <div className="rounded-2xl bg-slate-900 px-4 py-3 text-white">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-300">
-                Free Likes
-              </p>
-              <p className="mt-2 text-xl font-bold">{remainingLikes}</p>
-            </div>
-            <div className="rounded-2xl bg-pink-50 px-4 py-3 text-slate-800">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-pink-500">
-                Reset In
-              </p>
-              <p className="mt-2 text-lg font-bold">{remainingTime}</p>
-            </div>
+          <div className="mb-2 flex items-center justify-between rounded-[1rem] border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 xl:hidden">
+            <span className="truncate">Free {remainingLikes}</span>
+            <span className="mx-2 h-3 w-px shrink-0 bg-slate-200" />
+            <span className="truncate text-pink-500">Reset {remainingTime}</span>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
             <AnimatePresence mode="wait">
               {profile ? (
                 <motion.div
@@ -246,12 +224,9 @@ function SwipePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="rounded-[1.75rem] border border-slate-200 bg-slate-50 px-6 py-12 text-center"
+                  className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-7 text-center"
                 >
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm">
-                    <FaHeart className="text-xl text-pink-500" />
-                  </div>
-                  <p className="mt-5 text-lg font-bold text-slate-900">
+                  <p className="text-base font-bold text-slate-900">
                     지금 보여드릴 추천 사용자가 없습니다.
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -261,24 +236,24 @@ function SwipePage() {
               )}
             </AnimatePresence>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleLike}
                 disabled={!profile}
-                className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold shadow-md transition sm:text-base ${
+                className={`flex items-center justify-center gap-1.5 rounded-[1rem] px-3 py-2 text-xs font-bold shadow-md transition sm:text-sm ${
                   profile
                     ? "bg-rose-500 text-white hover:bg-rose-600"
                     : "cursor-not-allowed bg-slate-200 text-slate-400"
                 }`}
               >
                 <FaThumbsUp />
-                호감 보내기
+                호감
               </button>
 
               <button
                 onClick={() => setShowSuperChatModal(true)}
                 disabled={!profile}
-                className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold shadow-md transition sm:text-base ${
+                className={`flex items-center justify-center gap-1.5 rounded-[1rem] px-3 py-2 text-xs font-bold shadow-md transition sm:text-sm ${
                   profile
                     ? "bg-slate-900 text-white hover:bg-slate-800"
                     : "cursor-not-allowed bg-slate-200 text-slate-400"
@@ -291,7 +266,7 @@ function SwipePage() {
           </div>
         </section>
 
-        <aside className="hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] xl:flex xl:flex-col xl:justify-between">
+        <aside className="hidden w-full max-w-[300px] rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] xl:flex xl:flex-col xl:justify-between xl:justify-self-start">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
               Guide
@@ -317,8 +292,8 @@ function SwipePage() {
           <div className="rounded-[1.5rem] bg-gradient-to-br from-slate-900 via-slate-800 to-pink-600 px-5 py-5 text-white">
             <p className="text-xs uppercase tracking-[0.24em] text-white/70">Tip</p>
             <p className="mt-3 text-base font-bold leading-8">
-              웹에서는 안내 패널과 카드를 분리해 응답성을 높였고, 모바일에서는 한 화면 안에
-              카드와 액션이 같이 보이도록 구성했습니다.
+              모바일에서는 카드를 중심에 두고 핵심 정보만 빠르게 확인할 수 있게
+              구성했습니다.
             </p>
           </div>
         </aside>

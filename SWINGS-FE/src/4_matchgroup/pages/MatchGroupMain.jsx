@@ -21,13 +21,13 @@ export default function MatchGroupMain() {
         <MatchCard
           icon={<GolfIcon className="h-6 w-6 text-green-600" />}
           title="FIELD"
-          desc="실외 필드에서 여유 있게 라운드를 즐길 멤버를 찾아보세요."
+          desc="야외 필드에서 자연스럽게 라운드를 즐길 멤버를 찾아보세요."
           to="/swings/matchgroup/field"
         />
         <MatchCard
           icon={<LandPlotIcon className="h-6 w-6 text-blue-600" />}
           title="SCREEN"
-          desc="스크린 골프로 가볍게 시작하고 싶은 사람들을 위한 모임입니다."
+          desc="스크린 골프로 가볍게 시작하고 싶은 분들을 위한 모임입니다."
           to="/swings/matchgroup/screen"
         />
       </div>
@@ -57,7 +57,7 @@ export default function MatchGroupMain() {
             <InfoItem
               icon={<CalendarIcon className="h-5 w-5 text-gray-700" />}
               title="일정 관리"
-              desc="참여 중인 모임의 일정과 인원을 한눈에 확인하고 관리할 수 있습니다."
+              desc="참여 중인 모임의 일정과 인원 정보를 한눈에 확인하고 관리할 수 있습니다."
             />
           </div>
         </BaseModal>

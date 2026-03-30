@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  fetchUserData,
-  getPointBalance,
-  getProfileImageUrl,
-  updateUserInfo,
-} from "../api/userApi";
-import { removeToken } from "../utils/userUtils";
-import {
   Coins,
   LogOut,
   Settings,
   KeyRound,
   Trash2,
   Shield,
-  UserCircle,
   Pencil,
   X,
+  UserCircle,
 } from "lucide-react";
+import {
+  fetchUserData,
+  getPointBalance,
+  getProfileImageUrl,
+  updateUserInfo,
+} from "../api/userApi";
+import { removeToken } from "../utils/userUtils";
 import IntroduceEditor from "../components/IntroduceEditor";
 import ProfileImageUploader from "../components/ProfileImageUploader";
 import PasswordChangeForm from "../components/PasswordChangeForm";
@@ -43,7 +43,7 @@ export default function MyPage() {
         const balance = await getPointBalance();
         setPoint(balance);
       } catch (err) {
-        console.error("유저 정보 또는 포인트를 불러오지 못했습니다.", err);
+        console.error("사용자 정보 또는 포인트를 불러오지 못했습니다.", err);
       } finally {
         setLoading(false);
       }
@@ -66,7 +66,7 @@ export default function MyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white px-4 py-8 relative">
+    <div className="relative min-h-screen bg-white px-4 py-8">
       <button
         onClick={() => navigate("/swings/social")}
         className="absolute left-4 top-4 z-10 rounded-full bg-white p-2 transition"
@@ -126,7 +126,7 @@ export default function MyPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-gray-600">
             <Coins size={18} className="text-yellow-500" />
-            <span className="text-sm font-bold">보유 하트</span>
+            <span className="text-sm font-bold">보유 포인트</span>
           </div>
           <div className="text-lg font-bold text-black">{point.toLocaleString()}</div>
         </div>
@@ -169,22 +169,20 @@ export default function MyPage() {
       </div>
 
       {showImageModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 pt-24 pb-28">
           <ProfileImageUploader
             imageFile={imageFile}
             setImageFile={setImageFile}
             initialImage={formData?.userImg}
             onClose={() => setShowImageModal(false)}
-            onComplete={(filename) =>
-              setFormData({ ...formData, userImg: filename })
-            }
+            onComplete={(filename) => setFormData({ ...formData, userImg: filename || null })}
           />
         </div>
       )}
 
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 pt-24 pb-28">
+          <div className="relative max-h-[calc(100vh-10rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-lg">
             <button
               onClick={() => setShowPasswordModal(false)}
               className="absolute right-4 top-4 text-gray-500 hover:text-black"
@@ -196,9 +194,7 @@ export default function MyPage() {
         </div>
       )}
 
-      {showDeleteModal && (
-        <DeleteUserModal onClose={() => setShowDeleteModal(false)} />
-      )}
+      {showDeleteModal && <DeleteUserModal onClose={() => setShowDeleteModal(false)} />}
     </div>
   );
 }

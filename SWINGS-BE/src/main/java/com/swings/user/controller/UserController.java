@@ -93,6 +93,16 @@ public class UserController {
         }
     }
 
+    @DeleteMapping("/me/profile-image")
+    public ResponseEntity<String> resetProfileImage() {
+        try {
+            userService.resetProfileImage();
+            return ResponseEntity.ok("프로필 이미지가 기본 상태로 변경되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("프로필 이미지 초기화 실패: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/me/profile-image/{filename}")
     public ResponseEntity<Resource> getProfileImage(@PathVariable("filename") String filename) {
         try {

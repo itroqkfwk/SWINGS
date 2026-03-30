@@ -237,6 +237,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void resetProfileImage() {
+        UserEntity user = getCurrentUser();
+
+        try {
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+
+            if (user.getUserImg() != null && !user.getUserImg().isEmpty()) {
+                File oldImage = uploadPath.resolve(user.getUserImg()).toFile();
+                if (oldImage.exists()) {
+                    oldImage.delete();
+                }
+            }
+
+            user.setUserImg(null);
+            userRepository.save(user);
+        } catch (Exception e) {
+            throw new RuntimeException("프로필 이미지 초기화 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public void deleteCurrentUserWithPassword(String password) {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 

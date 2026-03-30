@@ -5,7 +5,6 @@ import { IoIosArrowBack, IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { MapPin, Plus } from "lucide-react";
 import { format, getDaysInMonth, isToday } from "date-fns";
 import { ko } from "date-fns/locale";
-
 import MatchGroupCard from "../components/MatchGroupCard";
 import useMatchGroupList from "../hooks/useMatchGroupList";
 import MatchGroupCreate from "./MatchGroupCreate.jsx";
@@ -48,10 +47,12 @@ const MatchGroupList = () => {
     filteredGroups,
   } = useMatchGroupList(category);
 
-  const groupCountByDate = filteredGroups.reduce((acc, group) => {
+  const groupCountByDate = filteredGroups.reduce((accumulator, group) => {
     const date = group.schedule?.split("T")[0];
-    if (date) acc[date] = (acc[date] || 0) + 1;
-    return acc;
+    if (date) {
+      accumulator[date] = (accumulator[date] || 0) + 1;
+    }
+    return accumulator;
   }, {});
 
   const handleDateClick = (ymd) => {
@@ -59,15 +60,18 @@ const MatchGroupList = () => {
   };
 
   const changeMonth = (delta) => {
-    setMonthOffset((prev) => prev + delta);
+    setMonthOffset((previous) => previous + delta);
     setScrollReady(false);
   };
 
   useEffect(() => {
-    if (!scrollRef.current) return;
-    const todayEl = scrollRef.current.querySelector(".today");
-    if (todayEl && !scrollReady) {
-      todayEl.scrollIntoView({ inline: "center", behavior: "smooth" });
+    if (!scrollRef.current) {
+      return;
+    }
+
+    const todayElement = scrollRef.current.querySelector(".today");
+    if (todayElement && !scrollReady) {
+      todayElement.scrollIntoView({ inline: "center", behavior: "smooth" });
       setScrollReady(true);
     }
   }, [monthOffset, scrollReady]);
@@ -83,7 +87,7 @@ const MatchGroupList = () => {
         >
           <IoIosArrowBack size={25} />
         </button>
-        <h1 className="text-xl font-bold text-center">{pageTitle}</h1>
+        <h1 className="text-center text-xl font-bold">{pageTitle}</h1>
         <button
           onClick={() => setShowCreateModal(true)}
           className="font-bold text-custom-pink"
@@ -152,11 +156,11 @@ const MatchGroupList = () => {
           ref={scrollRef}
           className="scrollbar-hide flex gap-4 overflow-x-auto scroll-smooth"
         >
-          {Array.from({ length: daysInMonth }, (_, i) => {
+          {Array.from({ length: daysInMonth }, (_, index) => {
             const date = new Date(
               baseMonth.getFullYear(),
               baseMonth.getMonth(),
-              i + 1
+              index + 1
             );
             const ymd = format(date, "yyyy-MM-dd");
             const day = format(date, "d");
@@ -174,10 +178,10 @@ const MatchGroupList = () => {
               >
                 <span
                   className={`mb-1 ${
-                    weekday === "토"
-                      ? "text-blue-500"
-                      : weekday === "일"
+                    weekday === "일"
                       ? "text-red-500"
+                      : weekday === "토"
+                      ? "text-blue-500"
                       : ""
                   }`}
                 >
@@ -195,7 +199,7 @@ const MatchGroupList = () => {
 
       {filteredGroups.length === 0 ? (
         <div className="mt-10 rounded-[1.75rem] border border-dashed border-slate-200 bg-white px-6 py-14 text-center text-gray-500">
-          조건에 맞는 그룹이 없습니다.
+          조건에 맞는 모임이 아직 없습니다.
         </div>
       ) : (
         <motion.div

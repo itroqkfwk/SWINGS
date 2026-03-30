@@ -47,7 +47,7 @@ const MatchGroupDetail = () => {
       setParticipants(accepted);
       setPendingParticipants(pending);
     } catch (error) {
-      console.error("데이터 로딩 오류:", error);
+      console.error("모임 데이터 로딩 오류:", error);
     } finally {
       setLoading(false);
     }
@@ -80,23 +80,19 @@ const MatchGroupDetail = () => {
     setShowJoinModal(false);
   };
 
-  const femaleCount = participants.filter((p) => p.gender === "female").length;
-  const maleCount = participants.filter((p) => p.gender === "male").length;
+  const femaleCount = participants.filter((participant) => participant.gender === "female").length;
+  const maleCount = participants.filter((participant) => participant.gender === "male").length;
 
   const genderLimitReached =
     (currentUser?.gender === "female" && femaleCount >= group?.femaleLimit) ||
     (currentUser?.gender === "male" && maleCount >= group?.maleLimit);
 
   if (loading) {
-    return <p className="text-center">그룹 정보를 불러오는 중...</p>;
+    return <p className="text-center">모임 정보를 불러오는 중입니다...</p>;
   }
 
   if (!group) {
-    return (
-      <p className="text-center text-red-500">
-        그룹 정보를 불러올 수 없습니다.
-      </p>
-    );
+    return <p className="text-center text-red-500">모임 정보를 불러올 수 없습니다.</p>;
   }
 
   return (
@@ -123,11 +119,11 @@ const MatchGroupDetail = () => {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
               <Venus className="h-4 w-4 text-pink-500" />
-              <span>여자 {femaleCount}/{group.femaleLimit}</span>
+              <span>여성 {femaleCount}/{group.femaleLimit}</span>
             </div>
             <div className="flex items-center gap-1">
               <Mars className="h-4 w-4 text-blue-500" />
-              <span>남자 {maleCount}/{group.maleLimit}</span>
+              <span>남성 {maleCount}/{group.maleLimit}</span>
             </div>
           </div>
           <div>

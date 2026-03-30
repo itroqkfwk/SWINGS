@@ -293,10 +293,10 @@ const FeedDetailModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[9980] flex items-center justify-center bg-slate-950/45 p-3 backdrop-blur-sm sm:p-5">
+    <div className="fixed inset-0 z-[9980] flex items-center justify-center bg-slate-950/45 p-4 pt-28 pb-28 backdrop-blur-sm sm:p-6 sm:pt-28 sm:pb-28">
       <div
         ref={modalRef}
-        className="relative flex h-[min(92vh,56rem)] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-white/60 bg-white/95 shadow-[0_35px_90px_rgba(15,23,42,0.22)] lg:flex-row"
+        className="relative flex h-[min(calc(100vh-11rem),50rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-white/60 bg-white/95 shadow-[0_35px_90px_rgba(15,23,42,0.22)] lg:flex-row"
       >
         <button
           type="button"
