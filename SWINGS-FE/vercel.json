@@ -1,7 +1,18 @@
 {
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/swings",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/swings",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/swings/(.*)",
       "destination": "/index.html"
     }
   ]
