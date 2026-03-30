@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,9 @@ public class DemoDataInitializer {
     private final UserLikeRepository userLikeRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.demo-data.admin-password:" + DEMO_PASSWORD + "}")
+    private String adminPassword;
 
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
@@ -175,6 +179,10 @@ public class DemoDataInitializer {
                     }
                     if (!user.isVerified()) {
                         user.setVerified(true);
+                        changed = true;
+                    }
+                    if (!passwordEncoder.matches(adminPassword, user.getPassword())) {
+                        user.setPassword(passwordEncoder.encode(adminPassword));
                         changed = true;
                     }
 
