@@ -14,7 +14,9 @@ import com.swings.user.entity.UserEntity;
 import com.swings.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +29,8 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DemoDataInitializer implements CommandLineRunner {
+@ConditionalOnProperty(name = "app.demo-data.enabled", havingValue = "true", matchIfMissing = true)
+public class DemoDataInitializer {
 
     private static final String DEMO_PASSWORD = "Passw0rd!";
     private static final String DEMO_FEED_CAPTION =
@@ -41,9 +44,9 @@ public class DemoDataInitializer implements CommandLineRunner {
     private final ChatRoomRepository chatRoomRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Override
+    @EventListener(ApplicationReadyEvent.class)
     @Transactional
-    public void run(String... args) {
+    public void initializeDemoData() {
         UserEntity adminUser = ensureAdminUserDefaults();
 
         UserEntity demoFieldHost = getOrCreateUser(
