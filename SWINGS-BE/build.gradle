@@ -74,6 +74,14 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+tasks.register('bootRunLocal', org.springframework.boot.gradle.tasks.run.BootRun) {
+    group = 'application'
+    description = 'Run the backend with the local profile'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.swings.SwingsApplication'
+    systemProperty 'spring.profiles.active', 'local'
+}
+
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-parameters"
 }

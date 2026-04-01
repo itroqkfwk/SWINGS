@@ -25,7 +25,7 @@ const ImageModal = ({ imageUrl, onClose }) => {
           className="max-w-full max-h-screen object-contain rounded-lg shadow-lg"
           onError={(e) => {
             console.error("이미지 로드 실패:", imageUrl);
-            e.target.src = "/placeholder-image.jpg";
+            e.target.src = "/default-profile.jpg";
           }}
         />
       </div>

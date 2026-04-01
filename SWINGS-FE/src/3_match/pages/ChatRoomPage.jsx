@@ -26,7 +26,7 @@ const createDummyMessages = (dummyRoom, username) => [
   {
     sender: dummyRoom?.targetUsername || "golf_sumin",
     senderName: dummyRoom?.targetName || "수민",
-    content: "주 1~2번 정도 쳐요. 라운드도 좋아해서 주말 일정 맞으면 좋겠어요.",
+    content: "주 1~2번 정도 쳐요. 일정 맞으면 같이 라운드 가도 좋을 것 같아요.",
     sentAt: new Date(Date.now() - 1000 * 60 * 7).toISOString(),
   },
 ];
@@ -67,8 +67,12 @@ const ChatRoomPage = () => {
         }
 
         const response = await fetchChatMessages(roomId);
-        const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
-        setMessages(data.length > 0 ? data : createDummyMessages(dummyRoom, user.username));
+        const data = Array.isArray(response.data)
+          ? response.data
+          : response.data?.data || [];
+        setMessages(
+          data.length > 0 ? data : createDummyMessages(dummyRoom, user.username)
+        );
         await markMessagesAsRead(roomId, user.username);
       } catch (error) {
         console.error("채팅 데이터 로딩 실패:", error);
@@ -183,11 +187,16 @@ const ChatRoomPage = () => {
     <div className="flex h-screen flex-col bg-white">
       <div className="fixed left-0 top-0 z-50 flex h-14 w-full items-center justify-between bg-white px-4 shadow">
         <div className="flex items-center gap-2">
-          <button onClick={() => navigate(-1)} className="text-gray-600 hover:text-black">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-gray-600 hover:text-black"
+          >
             <IoIosArrowBack size={24} />
           </button>
           <h1 className="relative -top-[1px] text-lg font-bold">
-            {dummyRoom?.targetName ? `${dummyRoom.targetName}님과의 채팅` : "채팅방"}
+            {dummyRoom?.targetName
+              ? `${dummyRoom.targetName}님과의 채팅`
+              : "채팅방"}
           </h1>
         </div>
         <button
