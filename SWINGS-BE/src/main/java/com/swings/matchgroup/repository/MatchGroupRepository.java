@@ -42,4 +42,6 @@ public interface MatchGroupRepository extends JpaRepository<MatchGroupEntity, Lo
             @Param("radius") double radiusInKm
     );
 
+    Optional<MatchGroupEntity> findFirstByHost_UserIdAndMatchTypeAndDeletedFalse(Long hostId, String matchType);
+
 }

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import org.springframework.data.domain.Pageable;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FeedRepository extends JpaRepository<FeedEntity, Long> {
@@ -14,4 +15,5 @@ public interface FeedRepository extends JpaRepository<FeedEntity, Long> {
     List<FeedEntity> findByUserUserIdOrderByCreatedAtDesc(Long userId);
     List<FeedEntity> findByUser_UserId(Long userId);
     Page<FeedEntity> findByUser_UserIdIn(List<Long> userIds, Pageable pageable);
+    Optional<FeedEntity> findFirstByUser_UserIdAndCaption(Long userId, String caption);
 }

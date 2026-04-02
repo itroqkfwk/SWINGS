@@ -30,7 +30,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(name = "app.demo-data.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "app.demo-data.enabled", havingValue = "true", matchIfMissing = false)
 public class DemoDataInitializer {
 
     private static final String DEMO_PASSWORD = "Passw0rd!";
@@ -229,30 +229,28 @@ public class DemoDataInitializer {
     }
 
     private void seedFeed(UserEntity writer, List<UserEntity> likedUsers) {
-        FeedEntity feed = feedRepository.findAll().stream()
-                .filter(currentFeed -> writer.getUserId().equals(currentFeed.getUser().getUserId()))
-                .filter(currentFeed -> DEMO_FEED_CAPTION.equals(currentFeed.getCaption()))
-                .findFirst()
-                .orElseGet(() -> feedRepository.save(
-                        FeedEntity.builder()
-                                .user(writer)
-                                .caption(DEMO_FEED_CAPTION)
-                                .imageUrl(null)
-                                .createdAt(LocalDateTime.now().minusHours(4))
-                                .likes(0)
-                                .build()
-                ));
+        FeedEntity feed = feedRepository.findFirstByUser_UserIdAndCaption(writer.getUserId(), DEMO_FEED_CAPTION)
+                .orElseGet(() -> FeedEntity.builder()
+                        .user(writer)
+                        .caption(DEMO_FEED_CAPTION)
+                        .imageUrl(null)
+                        .createdAt(LocalDateTime.now().minusHours(4))
+                        .likes(0)
+                        .build());
 
-        feed.getLikedUsers().addAll(likedUsers);
-        feed.setLikes(feed.getLikedUsers().size());
-        feedRepository.save(feed);
+        boolean likedUsersChanged = feed.getLikedUsers().addAll(likedUsers);
+        int likeCount = feed.getLikedUsers().size();
+
+        if (feed.getFeedId() == null || likedUsersChanged || feed.getLikes() != likeCount) {
+            feed.setLikes(likeCount);
+            feedRepository.save(feed);
+        }
     }
 
     private void seedFieldGroup(UserEntity host, UserEntity acceptedParticipant) {
-        MatchGroupEntity matchGroup = matchGroupRepository.findAll().stream()
+        MatchGroupEntity matchGroup = matchGroupRepository.findFirstByHost_UserIdAndMatchTypeAndDeletedFalse(host.getUserId(), "field")
                 .filter(group -> "주말 오전 한강뷰 필드 라운드".equals(group.getGroupName()))
-                .findFirst()
-                .orElseGet(() -> matchGroupRepository.save(
+                .orElseGet(() ->
                         MatchGroupEntity.builder()
                                 .host(host)
                                 .groupName("주말 오전 한강뷰 필드 라운드")
@@ -271,17 +269,20 @@ public class DemoDataInitializer {
                                 .closed(false)
                                 .deleted(false)
                                 .build()
-                ));
+                );
+
+        if (matchGroup.getMatchGroupId() == null) {
+            matchGroup = matchGroupRepository.save(matchGroup);
+        }
 
         addAcceptedParticipant(matchGroup, host);
         addAcceptedParticipant(matchGroup, acceptedParticipant);
     }
 
     private void seedScreenGroup(UserEntity host, UserEntity acceptedParticipant) {
-        MatchGroupEntity matchGroup = matchGroupRepository.findAll().stream()
+        MatchGroupEntity matchGroup = matchGroupRepository.findFirstByHost_UserIdAndMatchTypeAndDeletedFalse(host.getUserId(), "screen")
                 .filter(group -> "퇴근 후 잠실 스크린 한 판".equals(group.getGroupName()))
-                .findFirst()
-                .orElseGet(() -> matchGroupRepository.save(
+                .orElseGet(() ->
                         MatchGroupEntity.builder()
                                 .host(host)
                                 .groupName("퇴근 후 잠실 스크린 한 판")
@@ -300,7 +301,11 @@ public class DemoDataInitializer {
                                 .closed(false)
                                 .deleted(false)
                                 .build()
-                ));
+                );
+
+        if (matchGroup.getMatchGroupId() == null) {
+            matchGroup = matchGroupRepository.save(matchGroup);
+        }
 
         addAcceptedParticipant(matchGroup, host);
         addAcceptedParticipant(matchGroup, acceptedParticipant);
