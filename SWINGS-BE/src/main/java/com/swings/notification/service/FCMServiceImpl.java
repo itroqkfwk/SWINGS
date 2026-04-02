@@ -1,11 +1,14 @@
 package com.swings.notification.service;
 
 import com.google.firebase.messaging.*;
+import com.swings.notification.config.FirebaseEnabledCondition;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@Conditional(FirebaseEnabledCondition.class)
 public class FCMServiceImpl implements FCMService {
 
     @Override

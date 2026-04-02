@@ -3,12 +3,13 @@ package com.swings;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.swings.notification.config.FirebaseEnabledCondition;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -16,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Configuration
+@Conditional(FirebaseEnabledCondition.class)
 public class FirebaseConfig {
 
     @Value("${firebase.key-path:}")
@@ -36,11 +38,6 @@ public class FirebaseConfig {
             return;
         }
 
-        if (!StringUtils.hasText(firebaseKeyJson) && !StringUtils.hasText(firebaseKeyPath)) {
-            log.warn("Firebase credentials are not configured. Push notifications will be disabled.");
-            return;
-        }
-
         try (InputStream serviceAccount = openCredentialStream()) {
             FirebaseOptions options = new FirebaseOptions.Builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
@@ -54,7 +51,7 @@ public class FirebaseConfig {
     }
 
     private InputStream openCredentialStream() throws Exception {
-        if (StringUtils.hasText(firebaseKeyJson)) {
+        if (firebaseKeyJson != null && !firebaseKeyJson.isBlank()) {
             return new ByteArrayInputStream(firebaseKeyJson.getBytes(StandardCharsets.UTF_8));
         }
 
