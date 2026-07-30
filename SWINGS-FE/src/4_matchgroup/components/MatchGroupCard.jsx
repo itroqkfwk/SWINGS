@@ -43,13 +43,8 @@ export default function MatchGroupCard({ group }) {
     );
     setIsParticipant(accepted);
 
-    const pending = group?.participants?.some(
-      (participant) =>
-        participant.userId === currentUser.userId &&
-        participant.participantStatus === "PENDING"
-    );
-    setIsPending(!!pending);
-  }, [acceptedParticipants, currentUser, group?.participants]);
+    setIsPending(group?.currentUserParticipationStatus === "PENDING");
+  }, [acceptedParticipants, currentUser, group?.currentUserParticipationStatus]);
 
   const genderCount = useMemo(
     () =>

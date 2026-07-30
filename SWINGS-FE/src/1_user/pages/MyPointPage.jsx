@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { getPointBalance, getPointHistory } from "../api/userApi";
 
@@ -60,7 +60,7 @@ export default function MyPointPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 px-5 pb-24 pt-6">
-      <motion.section
+      <Motion.section
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
@@ -89,7 +89,7 @@ export default function MyPointPage() {
             충전하기
           </button>
         </div>
-      </motion.section>
+      </Motion.section>
 
       <section className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 ring-1 ring-amber-100">
         이벤트 상품은 기본 포인트에 추가 적립 혜택이 포함되어 있습니다.
@@ -113,7 +113,7 @@ export default function MyPointPage() {
                   <ul className="space-y-4">
                     <AnimatePresence>
                       {group.map((log, index) => (
-                        <motion.li
+                        <Motion.li
                           key={`${label}-${index}`}
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -139,7 +139,7 @@ export default function MyPointPage() {
                           >
                             {log.amount >= 0 ? `+${log.amount}` : log.amount} 포인트
                           </p>
-                        </motion.li>
+                        </Motion.li>
                       ))}
                     </AnimatePresence>
                   </ul>

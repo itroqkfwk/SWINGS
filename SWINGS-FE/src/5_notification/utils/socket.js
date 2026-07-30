@@ -32,6 +32,9 @@ export const connectSocket = (onMessage) => {
 
   stompClient = new Client({
     webSocketFactory: () => new SockJS(SOCKET_URL),
+    connectHeaders: {
+      Authorization: `Bearer ${token}`,
+    },
     reconnectDelay: 5000,
     onConnect: () => {
       stompClient.subscribe(`/topic/notification/${username}`, (message) => {

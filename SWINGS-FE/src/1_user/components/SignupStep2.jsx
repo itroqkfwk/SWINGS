@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import Select from "react-select";
 
 export default function SignupStep2({ formData, updateData }) {

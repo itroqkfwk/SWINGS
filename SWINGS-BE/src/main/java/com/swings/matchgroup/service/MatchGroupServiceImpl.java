@@ -41,7 +41,10 @@
                     .orElseThrow(() -> new RuntimeException("로그인한 사용자를 찾을 수 없습니다."));
 
             int total = matchGroupDTO.getFemaleLimit() + matchGroupDTO.getMaleLimit();
-            if (total != matchGroupDTO.getMaxParticipants()) {
+            if (matchGroupDTO.getMaxParticipants() <= 0
+                    || matchGroupDTO.getFemaleLimit() < 0
+                    || matchGroupDTO.getMaleLimit() < 0
+                    || total != matchGroupDTO.getMaxParticipants()) {
                 throw new IllegalArgumentException("성비 인원 수 합이 최대 인원과 일치하지 않습니다.");
             }
 
@@ -59,10 +62,7 @@
             log.info("방장 자동 참가 처리 완료");
 
             // 참가자 목록 포함 반환
-            List<MatchParticipantDTO> participantDTOs = matchParticipantRepository
-                    .findByMatchGroupMatchGroupId(saved.getMatchGroupId()).stream()
-                    .map(MatchParticipantDTO::fromEntity)
-                    .collect(Collectors.toList());
+            List<MatchParticipantDTO> participantDTOs = getAcceptedParticipantDTOs(saved.getMatchGroupId());
 
             return MatchGroupDTO.fromEntity(saved, participantDTOs);
         }
@@ -77,10 +77,7 @@
 
             return groups.stream()
                     .map(group -> {
-                        List<MatchParticipantDTO> participantDTOs = matchParticipantRepository
-                                .findByMatchGroupMatchGroupId(group.getMatchGroupId()).stream()
-                                .map(MatchParticipantDTO::fromEntity)
-                                .collect(Collectors.toList());
+                        List<MatchParticipantDTO> participantDTOs = getAcceptedParticipantDTOs(group.getMatchGroupId());
 
                         return MatchGroupDTO.fromEntity(group, participantDTOs);
                     })
@@ -98,10 +95,7 @@
                         return new RuntimeException("해당 방을 찾을 수 없습니다.");
                     });
 
-            List<MatchParticipantDTO> participantDTOs = matchParticipantRepository
-                    .findByMatchGroupMatchGroupId(groupId).stream()
-                    .map(MatchParticipantDTO::fromEntity)
-                    .collect(Collectors.toList());
+            List<MatchParticipantDTO> participantDTOs = getAcceptedParticipantDTOs(groupId);
 
             return MatchGroupDTO.fromEntity(groupEntity, participantDTOs);
         }
@@ -109,11 +103,16 @@
         // 모집 상태 변경
         @Override
         @Transactional
-        public void updateGroupStatus(Long groupId, boolean closed) {
-            MatchGroupEntity group = matchGroupRepository.findById(groupId)
-                    .orElseThrow(() -> new RuntimeException("그룹을 찾을 수 없습니다."));
-            group.setClosed(closed);
-            matchGroupRepository.save(group);
+    public void updateGroupStatus(Long groupId, boolean closed, Long userId) {
+        MatchGroupEntity group = matchGroupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("그룹을 찾을 수 없습니다."));
+
+        if (!group.getHost().getUserId().equals(userId)) {
+            throw new RuntimeException("방장만 모집 상태를 변경할 수 있습니다.");
+        }
+
+        group.setClosed(closed);
+        matchGroupRepository.save(group);
         }
 
         // 그룹 삭제 (방장만 가능)
@@ -158,6 +157,16 @@
 
             return results.stream()
                     .map(MatchGroupDTO::fromProjection)
+                    .collect(Collectors.toList());
+        }
+
+        private List<MatchParticipantDTO> getAcceptedParticipantDTOs(Long groupId) {
+            return matchParticipantRepository
+                    .findByMatchGroupMatchGroupIdAndParticipantStatus(
+                            groupId,
+                            MatchParticipantEntity.ParticipantStatus.ACCEPTED
+                    ).stream()
+                    .map(MatchParticipantDTO::fromEntity)
                     .collect(Collectors.toList());
         }
 

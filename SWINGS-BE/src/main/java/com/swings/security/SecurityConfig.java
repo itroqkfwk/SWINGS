@@ -2,6 +2,7 @@ package com.swings.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -35,7 +36,26 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource())) // CORS 적용
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/home", "/login", "/auth/login", "/user/info", "/users/signup","/users/check-username","/**").permitAll() // 비인증 상태에서도 접근 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(
+                                "/auth/login",
+                                "/auth/refresh",
+                                "/auth/oauth/google",
+                                "/users/signup",
+                                "/users/check-username",
+                                "/users/reset-password",
+                                "/users/me/profile-image/**",
+                                "/email/verify",
+                                "/uploads/**",
+                                "/",
+                                "/index.html",
+                                "/assets/**",
+                                "/vite.svg",
+                                "/favicon.ico",
+                                "/actuator/health",
+                                "/ws/**"
+                        ).permitAll()
+                        .requestMatchers("/admin", "/admin/**", "/actuator/**").hasRole("admin")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT 사용, 세션 비활성화

@@ -59,6 +59,10 @@ public class MatchParticipantServiceImpl implements MatchParticipantService {
             throw new RuntimeException("이미 참가한 사용자입니다.");
         }
 
+        if (!canUserJoinGroup(matchGroupId, userId)) {
+            throw new IllegalStateException("This group is closed or has no available slot.");
+        }
+
         MatchParticipantEntity participant = MatchParticipantEntity.builder()
                 .matchGroup(matchGroup)
                 .user(user)
@@ -99,6 +103,10 @@ public class MatchParticipantServiceImpl implements MatchParticipantService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("참가 정보를 찾을 수 없습니다."));
 
+        if (participant.getParticipantStatus() != MatchParticipantEntity.ParticipantStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be cancelled here.");
+        }
+
         matchParticipantRepository.delete(participant);
     }
 
@@ -118,7 +126,9 @@ public class MatchParticipantServiceImpl implements MatchParticipantService {
 
         if (group.getHost().getUserId().equals(userId)) {
             matchParticipantRepository.deleteAll(participants);
-            matchGroupRepository.delete(group);
+            group.setDeleted(true);
+            group.setClosed(true);
+            matchGroupRepository.save(group);
             log.info("\u2705 방장이 방을 나가며 그룹 삭제됨 (groupId={})", matchGroupId);
         } else {
             matchParticipantRepository.delete(participant);
@@ -140,6 +150,14 @@ public class MatchParticipantServiceImpl implements MatchParticipantService {
 
         if (!matchGroup.getHost().getUserId().equals(hostUserId)) {
             throw new RuntimeException("방장만 참가자를 승인할 수 있습니다.");
+        }
+
+        if (participant.getParticipantStatus() != MatchParticipantEntity.ParticipantStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be approved.");
+        }
+
+        if (!canUserJoinGroup(matchGroupId, participant.getUser().getUserId())) {
+            throw new IllegalStateException("This group is closed or has no available slot.");
         }
 
         participant.setParticipantStatus(MatchParticipantEntity.ParticipantStatus.ACCEPTED);
@@ -176,6 +194,10 @@ public class MatchParticipantServiceImpl implements MatchParticipantService {
             throw new RuntimeException("방장만 참가자를 거절할 수 있습니다.");
         }
 
+        if (participant.getParticipantStatus() != MatchParticipantEntity.ParticipantStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be rejected.");
+        }
+
         participant.setParticipantStatus(MatchParticipantEntity.ParticipantStatus.REJECTED);
         matchParticipantRepository.save(participant);
 
@@ -202,6 +224,10 @@ public class MatchParticipantServiceImpl implements MatchParticipantService {
 
         if (!group.getHost().getUserId().equals(hostUserId)) {
             throw new RuntimeException("방장만 강퇴할 수 있습니다.");
+        }
+
+        if (group.getHost().getUserId().equals(userId)) {
+            throw new IllegalStateException("The host cannot remove themselves.");
         }
 
         MatchParticipantEntity participant = matchParticipantRepository.findByMatchGroupMatchGroupId(matchGroupId)
@@ -297,15 +323,15 @@ public class MatchParticipantServiceImpl implements MatchParticipantService {
 
         // 성비 초과 여부
         long femaleCount = accepted.stream()
-                .filter(p -> p.getUser().getGender().name().equals("FEMALE"))
+                .filter(p -> p.getUser().getGender() == UserEntity.Gender.female)
                 .count();
 
         long maleCount = accepted.stream()
-                .filter(p -> p.getUser().getGender().name().equals("MALE"))
+                .filter(p -> p.getUser().getGender() == UserEntity.Gender.male)
                 .count();
 
-        if (user.getGender().name().equals("FEMALE") && femaleCount >= group.getFemaleLimit()) return false;
-        if (user.getGender().name().equals("MALE") && maleCount >= group.getMaleLimit()) return false;
+        if (user.getGender() == UserEntity.Gender.female && femaleCount >= group.getFemaleLimit()) return false;
+        if (user.getGender() == UserEntity.Gender.male && maleCount >= group.getMaleLimit()) return false;
 
         return true;
     }

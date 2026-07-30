@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import { FaCompass, FaImage, FaLayerGroup, FaPenFancy } from "react-icons/fa";
 import useUser from "../hooks/useUser";
 import useNewPostForm from "../hooks/useNewPostForm";
@@ -235,7 +235,7 @@ const FeedPage = () => {
 
           <AnimatePresence>
             {showNewPostForm && (
-              <motion.div
+              <Motion.div
                 key="new-post-form"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -258,7 +258,7 @@ const FeedPage = () => {
                     isSubmitting={isSubmittingPost}
                   />
                 </div>
-              </motion.div>
+              </Motion.div>
             )}
           </AnimatePresence>
 
@@ -313,7 +313,7 @@ const FeedPage = () => {
                 )}
 
                 {posts.map((post, index) => (
-                  <motion.div
+                  <Motion.div
                     key={post.feedId}
                     ref={index === posts.length - 1 ? lastPostRef : null}
                     initial={{ opacity: 0, y: 20 }}
@@ -350,7 +350,7 @@ const FeedPage = () => {
                         )
                       }
                     />
-                  </motion.div>
+                  </Motion.div>
                 ))}
               </div>
             </section>

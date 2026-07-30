@@ -25,7 +25,7 @@ public class RedisSubscriber implements MessageListener {
             matchGroupChatService.save(chatMessage);
 
             messagingTemplate.convertAndSend(
-                    "/topic/chat/" + chatMessage.getRoomId(),
+                    "/topic/matchgroup/" + chatMessage.getRoomId(),
                     chatMessage
             );
         } catch (Exception e) {

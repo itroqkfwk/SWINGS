@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { Dialog } from "@headlessui/react";
 import { removeToken } from "../utils/userUtils";
 
-export default function PasswordChangeForm({ isModal = false, onClose }) {
+export default function PasswordChangeForm({ isModal = false }) {
   const [username, setUsername] = useState(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

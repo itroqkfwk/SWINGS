@@ -46,6 +46,13 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         ChatRoomEntity chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("채팅방을 찾을 수 없습니다."));
 
+        if (sender == null || (!sender.equals(chatRoom.getUser1()) && !sender.equals(chatRoom.getUser2()))) {
+            throw new IllegalArgumentException("The sender is not a participant in this chat room.");
+        }
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("Message content is required.");
+        }
+
         ChatMessageEntity message = ChatMessageEntity.builder()
                 .chatRoom(chatRoom)
                 .sender(sender)
@@ -55,11 +62,13 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         ChatMessageEntity savedMessage = chatMessageRepository.save(message);
 
         // 푸시알림 전송
-        String receiverUsername = chatRoom.getUser1().equals(sender)
+        String receiverUsername = sender.equals(chatRoom.getUser1())
                 ? chatRoom.getUser2()
                 : chatRoom.getUser1();
 
-        UserEntity receiver = userRepository.findByUsername(receiverUsername).orElse(null);
+        UserEntity receiver = receiverUsername == null
+                ? null
+                : userRepository.findByUsername(receiverUsername).orElse(null);
 
         if (receiver != null && receiver.getPushToken() != null) {
             String preview = content.length() > 20 ? content.substring(0, 20) + "..." : content;

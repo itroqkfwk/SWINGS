@@ -13,7 +13,7 @@ export default function DeleteUserModal({ onClose }) {
       alert("회원 탈퇴가 완료되었습니다.");
       removeToken();
       navigate("/swings");
-    } catch (err) {
+    } catch {
       alert("비밀번호가 올바르지 않거나 오류가 발생했습니다.");
     }
   };

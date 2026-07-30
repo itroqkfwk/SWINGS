@@ -29,8 +29,10 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         return rooms.stream()
                 .map(room -> {
                     //  대상 유저 정보 가져오기
-                    String targetUsername = room.getUser1().equals(username) ? room.getUser2() : room.getUser1();
-                    UserEntity targetUser = userRepository.findByUsername(targetUsername).orElse(null);
+                    String targetUsername = username.equals(room.getUser1()) ? room.getUser2() : room.getUser1();
+                    UserEntity targetUser = targetUsername == null
+                            ? null
+                            : userRepository.findByUsername(targetUsername).orElse(null);
 
                     ChatMessageEntity lastMessage = chatMessageRepository
                             .findTopByChatRoom_RoomIdOrderBySentAtDesc(room.getRoomId());
@@ -66,6 +68,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     @Override
     public ChatRoomEntity createOrGetChatRoom(String user1, String user2, boolean isSuperChat) {
         return chatRoomRepository.findByUser1AndUser2(user1, user2)
+                .or(() -> chatRoomRepository.findByUser1AndUser2(user2, user1))
                 .orElseGet(() -> {
                     ChatRoomEntity newRoom = new ChatRoomEntity(user1, user2);
                     chatRoomRepository.save(newRoom);
@@ -106,5 +109,12 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         if (changed) {
             chatRoomRepository.save(room);
         }
+    }
+
+    @Override
+    public boolean isParticipant(Long roomId, String username) {
+        return chatRoomRepository.findById(roomId)
+                .map(room -> username != null && (username.equals(room.getUser1()) || username.equals(room.getUser2())))
+                .orElse(false);
     }
 }

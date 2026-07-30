@@ -42,8 +42,11 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {cards.map(({ title, description, icon: Icon, path, tone }) => (
-          <button
+        {cards.map(({ title, description, icon: Icon, path, tone }) => {
+          const CardIcon = Icon;
+
+          return (
+            <button
             key={title}
             type="button"
             onClick={() => navigate(path)}
@@ -53,7 +56,7 @@ export default function AdminDashboard() {
             <div className="space-y-5 p-6">
               <div className="flex items-center justify-between">
                 <div className="rounded-2xl bg-slate-100 p-3 text-slate-700">
-                  <Icon size={22} />
+                  <CardIcon size={22} />
                 </div>
                 <ArrowRight className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-slate-600" />
               </div>
@@ -62,8 +65,9 @@ export default function AdminDashboard() {
                 <p className="text-sm leading-6 text-slate-500">{description}</p>
               </div>
             </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
     </section>
   );

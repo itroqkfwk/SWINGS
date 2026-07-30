@@ -39,6 +39,8 @@ public class MatchGroupDTO {
     private String description;
     private int maxParticipants;
     private String matchType;
+    private boolean closed;
+    private boolean deleted;
 
     // Entity → DTO (with participants)
     public static MatchGroupDTO fromEntity(MatchGroupEntity entity, List<MatchParticipantDTO> participants) {
@@ -59,6 +61,8 @@ public class MatchGroupDTO {
                 .description(entity.getDescription())
                 .maxParticipants(entity.getMaxParticipants())
                 .matchType(entity.getMatchType())
+                .closed(entity.isClosed())
+                .deleted(entity.isDeleted())
                 .participants(participants)
                 .build();
     }

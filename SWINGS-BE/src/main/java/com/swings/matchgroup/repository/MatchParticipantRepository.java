@@ -12,6 +12,12 @@ public interface MatchParticipantRepository extends JpaRepository<MatchParticipa
     // 참가 여부 확인
     boolean existsByMatchGroup_MatchGroupIdAndUser_UserId(Long matchGroupId, Long userId);
 
+    boolean existsByMatchGroup_MatchGroupIdAndUser_UsernameAndParticipantStatus(
+            Long matchGroupId,
+            String username,
+            MatchParticipantEntity.ParticipantStatus participantStatus
+    );
+
     // 전체 참가자 조회 (상태 무관)
     List<MatchParticipantEntity> findByMatchGroupMatchGroupId(Long matchGroupId);
 

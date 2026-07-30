@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import BaseModal from "./ui/BaseModal";
 import {
-    getAcceptedParticipants,
-    getPendingParticipants,
+  getAcceptedParticipants,
+  getPendingParticipants,
 } from "../api/matchParticipantApi";
 import useMatchGroupActions from "../hooks/useMatchGroupActions";
 import { getCurrentUser } from "../api/matchGroupApi";
@@ -10,82 +10,104 @@ import PendingUserList from "./PendingUserList";
 import AcceptedUserList from "./AcceptedUserList";
 
 export default function GroupManageModal({ matchGroupId, onClose }) {
-    const [currentUser, setCurrentUser] = useState(null);
-    const [acceptedParticipants, setAcceptedParticipants] = useState([]);
-    const [pendingParticipants, setPendingParticipants] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [acceptedParticipants, setAcceptedParticipants] = useState([]);
+  const [pendingParticipants, setPendingParticipants] = useState([]);
+  const [error, setError] = useState("");
 
-    const {
-        handleApprove,
-        handleReject,
-        handleRemoveParticipant,
-    } = useMatchGroupActions(
-        { matchGroupId },
-        currentUser,
-        fetchParticipants,
-        acceptedParticipants,
-        setAcceptedParticipants
-    );
+  const {
+    handleApprove: approveParticipant,
+    handleReject: rejectParticipant,
+    handleKick: kickParticipant,
+  } = useMatchGroupActions(matchGroupId, currentUser);
 
-    async function fetchParticipants() {
-        try {
-            const user = await getCurrentUser();
-            setCurrentUser(user);
+  const fetchParticipants = useCallback(async () => {
+    try {
+      const [user, accepted, pending] = await Promise.all([
+        getCurrentUser(),
+        getAcceptedParticipants(matchGroupId),
+        getPendingParticipants(matchGroupId),
+      ]);
 
-            const accepted = await getAcceptedParticipants(matchGroupId);
-            const pending = await getPendingParticipants(matchGroupId);
-
-            setAcceptedParticipants(accepted);
-            setPendingParticipants(pending);
-        } catch (err) {
-            console.error("참가자 조회 실패:", err);
-        }
+      setCurrentUser(user);
+      setAcceptedParticipants(accepted);
+      setPendingParticipants(pending);
+      setError("");
+    } catch (loadError) {
+      console.error("참가자 목록을 불러오지 못했습니다.", loadError);
+      setError("참가자 목록을 불러오지 못했습니다.");
     }
+  }, [matchGroupId]);
 
-    useEffect(() => {
-        fetchParticipants();
-    }, [matchGroupId]);
+  useEffect(() => {
+    fetchParticipants();
+  }, [fetchParticipants]);
 
-    return (
-        <BaseModal title="👑 참가자 관리" onClose={onClose} maxWidth="max-w-2xl">
-            {/* 대기자 목록 */}
-            <section className="mb-6">
-                <h3 className="text-base font-semibold mb-3 text-gray-800">
-                    ⏳ 대기 중인 참가자
-                </h3>
-                <PendingUserList
-                    pending={pendingParticipants}
-                    onApprove={(p) =>
-                        handleApprove(matchGroupId, p.matchParticipantId, currentUser?.userId)
-                    }
-                    onReject={(p) =>
-                        handleReject(matchGroupId, p.matchParticipantId, currentUser?.userId)
-                    }
-                />
-            </section>
+  const runAction = async (action, failureMessage) => {
+    try {
+      setError("");
+      await action();
+      await fetchParticipants();
+    } catch (actionFailure) {
+      console.error(failureMessage, actionFailure);
+      setError(failureMessage);
+    }
+  };
 
-            {/* 확정 참가자 목록 */}
-            <section>
-                <h3 className="text-base font-semibold mb-3 text-gray-800">
-                    ✅ 참가자 목록
-                </h3>
-                <AcceptedUserList
-                    participants={acceptedParticipants}
-                    currentUserId={currentUser?.userId}
-                    onRemove={(p) =>
-                        handleRemoveParticipant(matchGroupId, p.userId, currentUser?.userId)
-                    }
-                />
-            </section>
+  return (
+    <BaseModal title="참가자 관리" onClose={onClose} maxWidth="max-w-2xl">
+      {error && (
+        <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          {error}
+        </p>
+      )}
 
-            {/* 닫기 버튼 */}
-            <div className="mt-8 text-center">
-                <button
-                    onClick={onClose}
-                    className="w-full sm:w-auto px-6 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition"
-                >
-                    닫기
-                </button>
-            </div>
-        </BaseModal>
-    );
+      <section className="mb-6">
+        <h3 className="mb-3 text-base font-semibold text-gray-800">
+          대기 중인 참가자
+        </h3>
+        <PendingUserList
+          pending={pendingParticipants}
+          onApprove={(participant) =>
+            runAction(
+              () => approveParticipant(undefined, participant.matchParticipantId),
+              "참가 승인에 실패했습니다."
+            )
+          }
+          onReject={(participant) =>
+            runAction(
+              () => rejectParticipant(undefined, participant.matchParticipantId),
+              "참가 거절에 실패했습니다."
+            )
+          }
+        />
+      </section>
+
+      <section>
+        <h3 className="mb-3 text-base font-semibold text-gray-800">
+          확정 참가자 목록
+        </h3>
+        <AcceptedUserList
+          participants={acceptedParticipants}
+          currentUserId={currentUser?.userId}
+          onRemove={(participant) =>
+            runAction(
+              () => kickParticipant(undefined, participant.userId),
+              "참가자 강퇴에 실패했습니다."
+            )
+          }
+        />
+      </section>
+
+      <div className="mt-8 text-center">
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full rounded-lg bg-gray-500 px-6 py-2 text-sm text-white transition hover:bg-gray-600 sm:w-auto"
+        >
+          닫기
+        </button>
+      </div>
+    </BaseModal>
+  );
 }

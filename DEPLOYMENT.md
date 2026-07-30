@@ -5,7 +5,7 @@
 - Frontend: Vercel
 - Backend: Render Web Service
 - MySQL: Neon Postgres is easier on free tiers, but this project is currently MySQL-based, so use Railway MySQL or a free MySQL host if you keep the current DB layer
-- Redis: Upstash Redis if chat/pubsub is required
+- Redis: Upstash Redis for multi-instance chat/pubsub scaling
 - File uploads: Cloudinary or S3-compatible object storage
 
 ## Important Production Notes
@@ -13,14 +13,15 @@
 - Render free disk is ephemeral. `FILE_UPLOAD_DIR` is not durable there.
 - If you keep local file uploads on Render, uploaded images can disappear after redeploy or restart.
 - For real operation, move profile/feed image uploads to object storage before launch.
-- Set `REDIS_ENABLED=true` only when an actual Redis instance is configured.
+- One backend instance supports real-time chat without Redis. Set `REDIS_ENABLED=true` only when an actual Redis instance is configured for cross-instance pub/sub.
+- Keep `DEMO_DATA_ENABLED=false` in production. Demo data is disabled by default.
 
 ## Backend (Render)
 
 - Root directory: `SWINGS-BE`
 - Build command: `./gradlew bootJar -x test`
 - Start command: `java -jar build/libs/*.jar`
-- Health check path: `/swings`
+- Health check path: `/swings/actuator/health`
 
 Required environment variables:
 
@@ -40,6 +41,7 @@ Optional environment variables:
 - `REDIS_ENABLED`
 - `REDIS_HOST`
 - `REDIS_PORT`
+- `DEMO_DATA_ENABLED`
 - `MAIL_HOST`
 - `MAIL_PORT`
 - `MAIL_USERNAME`
@@ -100,10 +102,10 @@ VITE_UPLOADS_BASE_URL=https://your-render-app.onrender.com/swings/uploads
 
 1. Create the database first and verify the backend can connect.
 2. Deploy backend to Render and set required environment variables.
-3. Confirm `https://your-render-app.onrender.com/swings` responds.
+3. Confirm `https://your-render-app.onrender.com/swings/actuator/health` responds.
 4. Deploy frontend to Vercel with backend URLs wired in.
 5. Update `FRONTEND_BASE_URL` and `CORS_ALLOWED_ORIGIN_PATTERNS` on Render to the final Vercel domain.
-6. If chat is needed in production, add Redis and set `REDIS_ENABLED=true`.
+6. For multi-instance deployment, add Redis and set `REDIS_ENABLED=true`; a single instance can use the built-in STOMP broker.
 
 ## Current Project Status
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { WS_BASE_URL } from "../../config/runtime";
+import { getToken } from "../../1_user/utils/userUtils";
 
 export const useMatchGroupChat = (matchGroupId, isAuthorized, currentUser) => {
   const clientRef = useRef(null);
@@ -13,11 +14,14 @@ export const useMatchGroupChat = (matchGroupId, isAuthorized, currentUser) => {
 
     const client = new Client({
       webSocketFactory: () => new SockJS(WS_BASE_URL),
+      connectHeaders: {
+        Authorization: `Bearer ${getToken()}`,
+      },
       reconnectDelay: 5000,
     });
 
     client.onConnect = () => {
-      client.subscribe(`/topic/chat/${matchGroupId}`, (message) => {
+      client.subscribe(`/topic/matchgroup/${matchGroupId}`, (message) => {
         const received = JSON.parse(message.body);
         setMessages((prev) => [...prev, received]);
       });

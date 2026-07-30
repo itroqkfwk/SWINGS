@@ -5,6 +5,8 @@ import { FaHeartCircleCheck } from "react-icons/fa6";
 import { AiOutlineInstagram } from "react-icons/ai";
 import { HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
 
+const MotionDiv = motion.div;
+
 const navItems = [
   { to: "/swings/matchgroup", label: "모임", icon: Handshake },
   { to: "/swings/match", label: "소개팅", icon: FaHeartCircleCheck },
@@ -39,14 +41,14 @@ export default function BottomNavBar() {
                 className="group relative flex flex-col items-center justify-center rounded-2xl px-2 py-2.5"
               >
                 {active && (
-                  <motion.div
+                  <MotionDiv
                     layoutId="bottom-nav-pill"
                     className="absolute inset-0 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-400 shadow-[0_12px_30px_rgba(244,114,182,0.28)]"
                     transition={{ type: "spring", stiffness: 280, damping: 24 }}
                   />
                 )}
 
-                <motion.div
+                <MotionDiv
                   animate={{ scale: active ? 1.08 : 1, y: active ? -1 : 0 }}
                   transition={{ type: "spring", stiffness: 320, damping: 18 }}
                   className={`relative z-10 flex items-center justify-center ${
@@ -54,7 +56,7 @@ export default function BottomNavBar() {
                   }`}
                 >
                   <Icon className="h-5 w-5 sm:h-[1.35rem] sm:w-[1.35rem]" />
-                </motion.div>
+                </MotionDiv>
 
                 <span
                   className={`relative z-10 mt-1 text-[10px] font-semibold leading-none ${

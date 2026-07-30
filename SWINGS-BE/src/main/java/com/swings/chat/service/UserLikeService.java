@@ -12,6 +12,8 @@ public interface UserLikeService {
     // 좋아요 요청 처리
     void likeUser(String fromUserId, String toUserId);
 
+    boolean hasLiked(String fromUserId, String toUserId);
+
     // 쌍방 좋아요 여부 확인
     boolean isMatched(String fromUserId, String toUserId);
 

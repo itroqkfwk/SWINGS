@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { IoIosArrowBack } from "react-icons/io";
 import {
@@ -18,14 +18,12 @@ import ParticipantDetailModal from "../components/ParticipantDetailModal";
 import PendingUserList from "../components/PendingUserList";
 import AcceptedUserList from "../components/AcceptedUserList";
 import {
-  approveParticipant,
   getAcceptedParticipants,
   getPendingParticipants,
-  rejectParticipant,
-  removeParticipant,
 } from "../api/matchParticipantApi";
 import { useMatchGroupData } from "../hooks/useMatchGroupData";
 import { useMatchGroupChat } from "../hooks/useMatchGroupChat";
+import useMatchGroupActions from "../hooks/useMatchGroupActions";
 
 export default function MatchGroup() {
   const { matchGroupId } = useParams();
@@ -40,27 +38,65 @@ export default function MatchGroup() {
   const [showAcceptedModal, setShowAcceptedModal] = useState(false);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [acceptedUsers, setAcceptedUsers] = useState([]);
+  const [actionError, setActionError] = useState("");
+  const [isLeaving, setIsLeaving] = useState(false);
 
-  const { participants, currentUser, group, isAuthorized, fetchData } =
-    useMatchGroupData(matchGroupId);
+  const {
+    participants,
+    currentUser,
+    group,
+    isAuthorized,
+    loading,
+    error,
+    fetchData,
+  } = useMatchGroupData(matchGroupId);
 
   const { messages, setMessages, chatInput, setChatInput, sendMessage } =
     useMatchGroupChat(matchGroupId, isAuthorized, currentUser);
 
-  useEffect(() => {
-    fetchData().then((initialMessages) => setMessages(initialMessages ?? []));
-  }, [fetchData, matchGroupId, setMessages]);
+  const {
+    handleApprove: approveParticipant,
+    handleReject: rejectParticipant,
+    handleKick: kickParticipant,
+    handleLeaveAccepted: leaveAcceptedGroup,
+  } = useMatchGroupActions(matchGroupId, currentUser);
+
+  const refreshGroupData = useCallback(
+    async ({ showLoading = false } = {}) => {
+      const initialMessages = await fetchData({ showLoading });
+      setMessages(initialMessages ?? []);
+    },
+    [fetchData, setMessages]
+  );
 
   useEffect(() => {
-    if (showPendingModal) {
-      getPendingParticipants(matchGroupId).then(setPendingUsers);
+    refreshGroupData({ showLoading: true }).catch(() => undefined);
+  }, [refreshGroupData]);
+
+  useEffect(() => {
+    if (!showPendingModal) {
+      return;
     }
+
+    getPendingParticipants(matchGroupId)
+      .then(setPendingUsers)
+      .catch((loadError) => {
+        console.error("대기자 목록을 불러오지 못했습니다.", loadError);
+        setActionError("대기자 목록을 불러오지 못했습니다.");
+      });
   }, [matchGroupId, showPendingModal]);
 
   useEffect(() => {
-    if (showAcceptedModal) {
-      getAcceptedParticipants(matchGroupId).then(setAcceptedUsers);
+    if (!showAcceptedModal) {
+      return;
     }
+
+    getAcceptedParticipants(matchGroupId)
+      .then(setAcceptedUsers)
+      .catch((loadError) => {
+        console.error("참가자 목록을 불러오지 못했습니다.", loadError);
+        setActionError("참가자 목록을 불러오지 못했습니다.");
+      });
   }, [matchGroupId, showAcceptedModal]);
 
   useEffect(() => {
@@ -70,9 +106,112 @@ export default function MatchGroup() {
   const isHost = String(currentUser?.userId) === String(group?.hostId);
 
   const participantCountLabel = useMemo(() => {
-    if (!group) return "";
+    if (!group) {
+      return "";
+    }
+
     return `${participants.length}/${group.maxParticipants}명 참여 중`;
   }, [group, participants.length]);
+
+  const refreshParticipants = async () => {
+    const [pending, accepted] = await Promise.all([
+      getPendingParticipants(matchGroupId),
+      getAcceptedParticipants(matchGroupId),
+    ]);
+    setPendingUsers(pending);
+    setAcceptedUsers(accepted);
+  };
+
+  const handleApprove = async (participant) => {
+    try {
+      setActionError("");
+      await approveParticipant(undefined, participant.matchParticipantId);
+      await refreshParticipants();
+      await refreshGroupData();
+    } catch (actionFailure) {
+      console.error("참가 승인에 실패했습니다.", actionFailure);
+      setActionError("참가 승인에 실패했습니다. 다시 시도해주세요.");
+    }
+  };
+
+  const handleReject = async (participant) => {
+    try {
+      setActionError("");
+      await rejectParticipant(undefined, participant.matchParticipantId);
+      await refreshParticipants();
+      await refreshGroupData();
+    } catch (actionFailure) {
+      console.error("참가 거절에 실패했습니다.", actionFailure);
+      setActionError("참가 거절에 실패했습니다. 다시 시도해주세요.");
+    }
+  };
+
+  const handleKick = async (participant) => {
+    if (!window.confirm(`${participant.username}님을 강퇴하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      setActionError("");
+      await kickParticipant(undefined, participant.userId);
+      await refreshParticipants();
+      await refreshGroupData();
+    } catch (actionFailure) {
+      console.error("참가자 강퇴에 실패했습니다.", actionFailure);
+      setActionError("참가자 강퇴에 실패했습니다. 다시 시도해주세요.");
+    }
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!group || !currentUser || isLeaving) {
+      return;
+    }
+
+    setIsLeaving(true);
+    setActionError("");
+
+    try {
+      await leaveAcceptedGroup();
+      setShowLeaveConfirm(false);
+      navigate(
+        group.matchType
+          ? `/swings/matchgroup/${group.matchType}`
+          : "/swings/matchgroup"
+      );
+    } catch (actionFailure) {
+      console.error("그룹 나가기에 실패했습니다.", actionFailure);
+      setActionError("그룹 나가기에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-10 text-center text-slate-500">
+        그룹 정보를 불러오는 중입니다...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-10 text-center">
+        <p className="text-sm font-semibold text-red-500">
+          그룹 정보를 불러오지 못했습니다.
+        </p>
+        <button
+          type="button"
+          onClick={() =>
+            refreshGroupData({ showLoading: true }).catch(() => undefined)
+          }
+          className="mt-4 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+        >
+          다시 시도
+        </button>
+      </div>
+    );
+  }
 
   if (!isAuthorized) {
     return (
@@ -98,41 +237,13 @@ export default function MatchGroup() {
     );
 
   const formatKoreanDate = (isoString) => {
-    if (!isoString) return "";
+    if (!isoString) {
+      return "";
+    }
+
     return format(new Date(isoString), "yyyy년 M월 d일 a h:mm", {
       locale: ko,
     });
-  };
-
-  const handleApprove = async (participant) => {
-    await approveParticipant(
-      group.matchGroupId,
-      participant.matchParticipantId,
-      currentUser.userId
-    );
-    setPendingUsers(await getPendingParticipants(group.matchGroupId));
-    await fetchData();
-  };
-
-  const handleReject = async (participant) => {
-    await rejectParticipant(
-      group.matchGroupId,
-      participant.matchParticipantId,
-      currentUser.userId
-    );
-    setPendingUsers(await getPendingParticipants(group.matchGroupId));
-    await fetchData();
-  };
-
-  const handleKick = async (participant) => {
-    if (!window.confirm(`${participant.username}님을 강퇴하시겠습니까?`)) return;
-    await removeParticipant(
-      group.matchGroupId,
-      participant.userId,
-      currentUser.userId
-    );
-    setAcceptedUsers(await getAcceptedParticipants(group.matchGroupId));
-    await fetchData();
   };
 
   const ParticipantSidebar = (
@@ -143,6 +254,7 @@ export default function MatchGroup() {
           type="button"
           onClick={() => setShowSidebar(false)}
           className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 lg:hidden"
+          aria-label="참가자 목록 닫기"
         >
           <X size={18} />
         </button>
@@ -151,7 +263,7 @@ export default function MatchGroup() {
       <ul className="flex-1 space-y-3 overflow-y-auto pr-1">
         {participants.map((participant) => (
           <li
-            key={participant.userId}
+            key={participant.matchParticipantId ?? participant.userId}
             onClick={() => {
               setSelectedParticipant(participant);
               setShowDetailModal(true);
@@ -200,12 +312,14 @@ export default function MatchGroup() {
         {isHost && (
           <>
             <button
+              type="button"
               onClick={() => setShowPendingModal(true)}
               className="rounded-xl bg-custom-pink px-3 py-2.5 font-semibold text-white"
             >
               참가 요청 관리
             </button>
             <button
+              type="button"
               onClick={() => setShowAcceptedModal(true)}
               className="rounded-xl bg-custom-purple px-3 py-2.5 font-semibold text-white"
             >
@@ -214,6 +328,7 @@ export default function MatchGroup() {
           </>
         )}
         <button
+          type="button"
           onClick={() => setShowLeaveConfirm(true)}
           className="rounded-xl border border-red-300 px-3 py-2.5 font-semibold text-red-500 transition hover:bg-red-50"
         >
@@ -228,8 +343,10 @@ export default function MatchGroup() {
       <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <button
+            type="button"
             onClick={() => navigate("/swings/matchgroup")}
             className="rounded-full p-2 text-slate-600 transition hover:bg-slate-100"
+            aria-label="모임 목록으로 돌아가기"
           >
             <IoIosArrowBack size={24} />
           </button>
@@ -242,8 +359,10 @@ export default function MatchGroup() {
           </div>
 
           <button
+            type="button"
             onClick={() => setShowSidebar(true)}
             className="rounded-full p-2 text-slate-600 transition hover:bg-slate-100 lg:hidden"
+            aria-label="참가자 목록 열기"
           >
             <Menu size={22} />
           </button>
@@ -308,6 +427,15 @@ export default function MatchGroup() {
               </p>
             </div>
 
+            {actionError && (
+              <p
+                role="alert"
+                className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600"
+              >
+                {actionError}
+              </p>
+            )}
+
             <div className="flex-1 space-y-3 overflow-y-auto rounded-2xl bg-slate-50 p-3">
               {messages.length === 0 ? (
                 <p className="pt-10 text-center text-sm text-slate-400">
@@ -343,8 +471,8 @@ export default function MatchGroup() {
             </div>
 
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
+              onSubmit={(event) => {
+                event.preventDefault();
                 sendMessage();
               }}
               className="mt-4 flex gap-2"
@@ -352,8 +480,8 @@ export default function MatchGroup() {
               <input
                 type="text"
                 value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="메시지를 입력하세요"
+                onChange={(event) => setChatInput(event.target.value)}
+                placeholder="메시지를 입력하세요."
                 className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-pink-300"
               />
               <button
@@ -386,19 +514,28 @@ export default function MatchGroup() {
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-lg">
-            <h3 className="mb-4 text-lg font-semibold text-slate-900">
-              정말 이 그룹을 나가시겠어요?
+            <h3 className="mb-3 text-lg font-semibold text-slate-900">
+              정말 그룹에서 나가시겠습니까?
             </h3>
+            <p className="mb-4 text-sm text-slate-500">
+              {isHost
+                ? "방장이 나가면 그룹과 참가자 정보가 함께 삭제됩니다."
+                : "나가면 그룹 채팅에 다시 입장할 수 없습니다."}
+            </p>
             <div className="flex justify-center gap-3">
               <button
-                onClick={() => navigate("/swings/matchgroup")}
-                className="rounded-lg bg-red-500 px-4 py-2 text-white"
+                type="button"
+                onClick={handleLeaveGroup}
+                disabled={isLeaving}
+                className="rounded-lg bg-red-500 px-4 py-2 text-white disabled:bg-red-300"
               >
-                나가기
+                {isLeaving ? "나가는 중..." : "나가기"}
               </button>
               <button
+                type="button"
                 onClick={() => setShowLeaveConfirm(false)}
-                className="rounded-lg bg-gray-200 px-4 py-2 text-slate-700"
+                disabled={isLeaving}
+                className="rounded-lg bg-gray-200 px-4 py-2 text-slate-700 disabled:opacity-60"
               >
                 취소
               </button>
@@ -420,6 +557,7 @@ export default function MatchGroup() {
             />
             <div className="mt-6 text-center">
               <button
+                type="button"
                 onClick={() => setShowPendingModal(false)}
                 className="rounded-lg bg-gray-200 px-4 py-2 text-slate-700"
               >
@@ -443,6 +581,7 @@ export default function MatchGroup() {
             />
             <div className="mt-6 text-center">
               <button
+                type="button"
                 onClick={() => setShowAcceptedModal(false)}
                 className="rounded-lg bg-gray-200 px-4 py-2 text-slate-700"
               >

@@ -56,7 +56,7 @@ export const updateUserInfo = async (username, updatedFields) => {
 // 프로필 이미지 가져오기
 export const getProfileImageUrl = (filename) => {
   if (!filename) return null;
-  return `${API_BASE_URL}/users/me/profile-image/${filename}`;
+  return `${API_BASE_URL}/users/me/profile-image/${encodeURIComponent(filename)}`;
 };
 
 // 프로필 이미지 수정
