@@ -6,6 +6,8 @@ import com.swings.notification.repository.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -79,17 +81,27 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     // 알림 읽음 처리
-    public void markAsRead(Long notificationId) {
-        NotificationEntity notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다."));
+    public void markAsRead(Long notificationId, String receiver) {
+        NotificationEntity notification = findOwnedNotification(notificationId, receiver);
         notification.setRead(true);
         notificationRepository.save(notification);
     }
 
     // 알림 삭제
     @Override
-    public void deleteNotification(Long notificationId) {
-        notificationRepository.deleteById(notificationId);
+    public void deleteNotification(Long notificationId, String receiver) {
+        notificationRepository.delete(findOwnedNotification(notificationId, receiver));
+    }
+
+    private NotificationEntity findOwnedNotification(Long notificationId, String receiver) {
+        NotificationEntity notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다."));
+
+        if (!receiver.equals(notification.getReceiver())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 사용자의 알림에는 접근할 수 없습니다.");
+        }
+
+        return notification;
     }
 
 }

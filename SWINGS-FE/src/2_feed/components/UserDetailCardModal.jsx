@@ -1,18 +1,18 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { FaTimes } from "react-icons/fa";
 import UserDetailCard from "./UserDetailCard";
 
 const UserDetailCardModal = ({ user, onClose }) => {
   return (
-    <motion.div
+    <Motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm"
       onClick={onClose}
     >
-      <motion.div
+      <Motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
         exit={{ scale: 0.95 }}
@@ -26,8 +26,8 @@ const UserDetailCardModal = ({ user, onClose }) => {
           <FaTimes />
         </button>
         <UserDetailCard user={user} />
-      </motion.div>
-    </motion.div>
+      </Motion.div>
+    </Motion.div>
   );
 };
 

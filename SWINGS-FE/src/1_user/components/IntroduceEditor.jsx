@@ -14,7 +14,7 @@ export default function IntroduceEditor() {
         const data = await fetchUserData();
         setText(data.introduce || "");
         setUsername(data.username);
-      } catch (err) {
+      } catch {
         toast.error("유저 정보 불러오기 실패");
       } finally {
         setLoading(false);
@@ -28,7 +28,7 @@ export default function IntroduceEditor() {
       await updateUserInfo(username, { introduce: text });
       toast.success("자기소개가 저장되었습니다!");
       setEditing(false);
-    } catch (err) {
+    } catch {
       toast.error("자기소개 저장 실패");
     }
   };

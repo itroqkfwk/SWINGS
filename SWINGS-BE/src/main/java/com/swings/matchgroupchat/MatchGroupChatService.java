@@ -9,4 +9,6 @@ public interface MatchGroupChatService {
     void save(ChatMessageDTO dto);
 
     List<ChatMessageDTO> getMessages(Long matchGroupId);
+
+    boolean isAcceptedParticipant(Long matchGroupId, String username);
 }

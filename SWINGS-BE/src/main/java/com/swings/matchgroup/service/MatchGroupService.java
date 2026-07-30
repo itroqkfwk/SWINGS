@@ -21,7 +21,7 @@ public interface MatchGroupService {
     List<MatchGroupDTO> getGroupsByHost(Long hostId);
 
     // 모집 상태 변경
-    void updateGroupStatus(Long groupId, boolean closed);
+    void updateGroupStatus(Long groupId, boolean closed, Long userId);
 
     // 그룹 삭제 (방장만 가능)
     void deleteGroup(Long groupId, Long userId);

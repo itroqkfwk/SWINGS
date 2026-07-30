@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { FaHeart, FaTimes, FaUser } from "react-icons/fa";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { normalizeImageUrl } from "../utils/imageUtils";
 
@@ -30,7 +30,7 @@ const LikedUsersModal = ({ users, onClose }) => {
 
   const modalContent = (
     <div className="liked-users-modal fixed inset-0 bg-transparent z-[9999] flex items-center justify-center p-4">
-      <motion.div
+      <Motion.div
         ref={modalRef}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -116,7 +116,7 @@ const LikedUsersModal = ({ users, onClose }) => {
             </ul>
           )}
         </div>
-      </motion.div>
+      </Motion.div>
     </div>
   );
   return createPortal(modalContent, document.body);

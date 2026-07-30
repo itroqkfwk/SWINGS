@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAllMatchGroups, getCurrentUser } from "../api/matchGroupApi";
+import { getMyParticipationGroups } from "../api/matchParticipantApi";
 
 export default function useMatchGroupList(category) {
     const [tab, setTab] = useState("all");
@@ -24,15 +25,27 @@ export default function useMatchGroupList(category) {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const user = await getCurrentUser();
+                const [user, data, participations] = await Promise.all([
+                    getCurrentUser(),
+                    getAllMatchGroups(category),
+                    getMyParticipationGroups(),
+                ]);
                 setCurrentUser(user);
 
-                const data = await getAllMatchGroups(category);
+                const participationByGroupId = new Map(
+                    participations.map((participation) => [
+                        String(participation.matchGroupId),
+                        participation.participantStatus,
+                    ])
+                );
                 const validGroups = category
                     ? data.filter((g) => g.matchType === category)
                     : data;
 
-                setGroups(validGroups);
+                setGroups(validGroups.map((group) => ({
+                    ...group,
+                    currentUserParticipationStatus: participationByGroupId.get(String(group.matchGroupId)) ?? null,
+                })));
             } catch (error) {
                 console.error("데이터 로딩 오류:", error);
                 setGroups([]);
@@ -48,7 +61,7 @@ export default function useMatchGroupList(category) {
 
         if (tab === "my" && currentUser) {
             filtered = filtered.filter((g) =>
-                g.participants?.some((p) => p.userId === currentUser.userId)
+                ["ACCEPTED", "PENDING"].includes(g.currentUserParticipationStatus)
             );
         }
 

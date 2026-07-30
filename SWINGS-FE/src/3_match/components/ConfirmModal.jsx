@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 
+const MotionDiv = motion.div;
+
 function ConfirmModal({
   message,
   onConfirm,
@@ -28,7 +30,7 @@ function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/35 px-4 backdrop-blur-sm">
-      <motion.div
+      <MotionDiv
         initial={{ opacity: 0, y: 18, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 14, scale: 0.98 }}
@@ -59,7 +61,7 @@ function ConfirmModal({
             {confirmLabel}
           </button>
         </div>
-      </motion.div>
+      </MotionDiv>
     </div>
   );
 }

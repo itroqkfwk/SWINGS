@@ -5,4 +5,4 @@ services:
     rootDir: SWINGS-BE
     buildCommand: ./gradlew bootJar -x test
     startCommand: java -jar build/libs/*.jar
-    healthCheckPath: /swings
+    healthCheckPath: /swings/actuator/health

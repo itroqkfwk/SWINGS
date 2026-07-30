@@ -1,10 +1,22 @@
 package com.swings.matchgroup.controller;
 
+import com.swings.matchgroup.dto.MatchGroupDTO;
 import com.swings.matchgroup.dto.MatchParticipantDTO;
+import com.swings.matchgroup.service.MatchGroupService;
 import com.swings.matchgroup.service.MatchParticipantService;
+import com.swings.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -15,95 +27,118 @@ import java.util.Map;
 public class MatchParticipantController {
 
     private final MatchParticipantService matchParticipantService;
+    private final MatchGroupService matchGroupService;
+    private final UserService userService;
 
-    // 참가 신청
     @PostMapping("/join")
-    public ResponseEntity<MatchParticipantDTO> joinMatch(@RequestBody MatchParticipantDTO dto) {
-        return ResponseEntity.ok(
-                matchParticipantService.joinMatch(dto.getMatchGroupId(), dto.getUserId())
-        );
+    public ResponseEntity<MatchParticipantDTO> joinMatch(
+            @RequestBody MatchParticipantDTO dto,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(matchParticipantService.joinMatch(dto.getMatchGroupId(), currentUserId(authentication)));
     }
 
-    // 참가 신청 취소
     @PostMapping("/leave")
-    public ResponseEntity<String> leaveMatch(@RequestBody MatchParticipantDTO dto) {
-        matchParticipantService.leaveMatch(dto.getMatchGroupId(), dto.getUserId());
-        return ResponseEntity.ok("참가 취소 완료");
+    public ResponseEntity<String> leaveMatch(
+            @RequestBody MatchParticipantDTO dto,
+            Authentication authentication
+    ) {
+        matchParticipantService.leaveMatch(dto.getMatchGroupId(), currentUserId(authentication));
+        return ResponseEntity.ok("Join request cancelled");
     }
 
-    // 참가 승인 (방장)
     @PostMapping("/approve")
-    public ResponseEntity<String> approveParticipant(@RequestBody MatchParticipantDTO dto) {
+    public ResponseEntity<String> approveParticipant(
+            @RequestBody MatchParticipantDTO dto,
+            Authentication authentication
+    ) {
         matchParticipantService.approveParticipant(
                 dto.getMatchGroupId(),
                 dto.getMatchParticipantId(),
-                dto.getUserId()
+                currentUserId(authentication)
         );
-        return ResponseEntity.ok("참가 승인 완료");
+        return ResponseEntity.ok("Participant approved");
     }
 
-    // 참가 거절 (방장)
     @PostMapping("/reject")
-    public ResponseEntity<String> rejectParticipant(@RequestBody MatchParticipantDTO dto) {
+    public ResponseEntity<String> rejectParticipant(
+            @RequestBody MatchParticipantDTO dto,
+            Authentication authentication
+    ) {
         matchParticipantService.rejectParticipant(
                 dto.getMatchGroupId(),
                 dto.getMatchParticipantId(),
-                dto.getUserId()
+                currentUserId(authentication)
         );
-        return ResponseEntity.ok("참가 거절 완료");
+        return ResponseEntity.ok("Participant rejected");
     }
 
-    // 강퇴 (방장)
     @DeleteMapping("/remove")
-    public ResponseEntity<String> removeParticipant(@RequestBody MatchParticipantDTO dto) {
-        matchParticipantService.removeParticipant(dto.getMatchGroupId(), dto.getUserId(), dto.getHostId());
-        return ResponseEntity.ok("강퇴 완료");
+    public ResponseEntity<String> removeParticipant(
+            @RequestBody MatchParticipantDTO dto,
+            Authentication authentication
+    ) {
+        matchParticipantService.removeParticipant(
+                dto.getMatchGroupId(),
+                dto.getUserId(),
+                currentUserId(authentication)
+        );
+        return ResponseEntity.ok("Participant removed");
     }
 
-    // 확정된 참가자 조회 (ACCEPTED)
     @GetMapping("/accepted/{matchGroupId}")
-    public ResponseEntity<List<MatchParticipantDTO>> getAcceptedParticipants(@PathVariable("matchGroupId") Long matchGroupId) {
-        return ResponseEntity.ok(
-                matchParticipantService.getAcceptedParticipants(matchGroupId)
-        );
+    public ResponseEntity<List<MatchParticipantDTO>> getAcceptedParticipants(@PathVariable Long matchGroupId) {
+        return ResponseEntity.ok(matchParticipantService.getAcceptedParticipants(matchGroupId));
     }
 
-    // 신청중인 참가자 조회 (PENDING)
     @GetMapping("/pending/{matchGroupId}")
-    public ResponseEntity<List<MatchParticipantDTO>> getPendingParticipants(@PathVariable("matchGroupId") Long matchGroupId) {
-        return ResponseEntity.ok(
-                matchParticipantService.getPendingParticipants(matchGroupId)
-        );
+    public ResponseEntity<List<MatchParticipantDTO>> getPendingParticipants(
+            @PathVariable Long matchGroupId,
+            Authentication authentication
+    ) {
+        MatchGroupDTO group = matchGroupService.getMatchGroupById(matchGroupId);
+        if (!group.getHostId().equals(currentUserId(authentication))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the host can view pending participants.");
+        }
+        return ResponseEntity.ok(matchParticipantService.getPendingParticipants(matchGroupId));
     }
 
-    // 나의 이력 조회
     @PostMapping("/my")
-    public ResponseEntity<List<MatchParticipantDTO>> getMyGroups(@RequestBody MatchParticipantDTO request) {
+    public ResponseEntity<List<MatchParticipantDTO>> getMyGroups(
+            @RequestBody MatchParticipantDTO request,
+            Authentication authentication
+    ) {
+        request.setUserId(currentUserId(authentication));
         return ResponseEntity.ok(matchParticipantService.getMyGroups(request));
     }
 
-    // 확정된 인원 수 조회
     @GetMapping("/accepted/count/{matchGroupId}")
-    public ResponseEntity<Integer> getAcceptedCount(@PathVariable("matchGroupId") Long matchGroupId) {
+    public ResponseEntity<Integer> getAcceptedCount(@PathVariable Long matchGroupId) {
         return ResponseEntity.ok(matchParticipantService.countAcceptedParticipants(matchGroupId));
     }
 
-    // 그룹 나가기 (방장: 그룹 삭제)
     @PostMapping("/leave/accepted")
-    public ResponseEntity<String> leaveAcceptedGroup(@RequestBody Map<String, Long> body) {
-        Long matchGroupId = body.get("matchGroupId");
-        Long userId = body.get("userId");
-        matchParticipantService.leaveAcceptedGroup(matchGroupId, userId);
-        return ResponseEntity.ok("그룹에서 나갔습니다.");
+    public ResponseEntity<String> leaveAcceptedGroup(
+            @RequestBody Map<String, Long> body,
+            Authentication authentication
+    ) {
+        matchParticipantService.leaveAcceptedGroup(body.get("matchGroupId"), currentUserId(authentication));
+        return ResponseEntity.ok("Left group");
     }
 
-    // 참가 가능 여부 확인
     @GetMapping("/check/{matchGroupId}/{userId}")
     public ResponseEntity<Boolean> canUserJoin(
-            @PathVariable("matchGroupId") Long matchGroupId,
-            @PathVariable("userId") Long userId
+            @PathVariable Long matchGroupId,
+            Authentication authentication
     ) {
-        boolean allowed = matchParticipantService.canUserJoinGroup(matchGroupId, userId);
-        return ResponseEntity.ok(allowed);
+        return ResponseEntity.ok(matchParticipantService.canUserJoinGroup(matchGroupId, currentUserId(authentication)));
+    }
+
+    private Long currentUserId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getName())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication is required.");
+        }
+        return userService.getUserByUsername(authentication.getName()).getUserId();
     }
 }

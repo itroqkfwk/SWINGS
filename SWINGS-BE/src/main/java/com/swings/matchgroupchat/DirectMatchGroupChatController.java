@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 
@@ -13,11 +14,11 @@ import java.time.LocalDateTime;
 
 @Controller
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "app.redis.enabled", havingValue = "true")
-public class MatchGroupChatController {
+@ConditionalOnProperty(name = "app.redis.enabled", havingValue = "false", matchIfMissing = true)
+public class DirectMatchGroupChatController {
 
-    private final RedisPublisher redisPublisher;
     private final MatchGroupChatService matchGroupChatService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/chat.send/{roomId}")
     public void sendMessage(
@@ -32,6 +33,7 @@ public class MatchGroupChatController {
         chatMessage.setRoomId(roomId);
         chatMessage.setSender(principal.getName());
         chatMessage.setSentAt(LocalDateTime.now());
-        redisPublisher.publish(roomId, chatMessage);
+        matchGroupChatService.save(chatMessage);
+        messagingTemplate.convertAndSend("/topic/matchgroup/" + roomId, chatMessage);
     }
 }

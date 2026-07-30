@@ -11,6 +11,8 @@ import MatchGroupCreate from "./MatchGroupCreate.jsx";
 import BaseModal from "../components/ui/BaseModal";
 import MapRegionModal from "../components/MapRegionModal";
 
+const MotionDiv = motion.div;
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -202,18 +204,18 @@ const MatchGroupList = () => {
           조건에 맞는 모임이 아직 없습니다.
         </div>
       ) : (
-        <motion.div
+        <MotionDiv
           className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {filteredGroups.map((group) => (
-            <motion.div key={group.matchGroupId} variants={itemVariants}>
+            <MotionDiv key={group.matchGroupId} variants={itemVariants}>
               <MatchGroupCard group={group} isMine={tab === "my"} />
-            </motion.div>
+            </MotionDiv>
           ))}
-        </motion.div>
+        </MotionDiv>
       )}
 
       {showCreateModal && (

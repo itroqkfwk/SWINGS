@@ -84,6 +84,11 @@ public class UserLikeServiceImpl implements UserLikeService {
     }
 
     @Override
+    public boolean hasLiked(String fromUserId, String toUserId) {
+        return userLikeRepository.existsByFromUserIdAndToUserId(fromUserId, toUserId);
+    }
+
+    @Override
     public boolean isMatched(String fromUserId, String toUserId) {
         return userLikeRepository.countMutualLike(fromUserId, toUserId) == 2;
     }

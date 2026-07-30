@@ -30,7 +30,7 @@ export default function UserDetailModal({ username, onClose, onUpdated }) {
       await updateUserRole(username, role);
       alert("권한이 성공적으로 변경되었습니다.");
       onUpdated();
-    } catch (error) {
+    } catch {
       alert("권한 변경 중 오류가 발생했습니다.");
     }
   };
@@ -44,7 +44,7 @@ export default function UserDetailModal({ username, onClose, onUpdated }) {
       await deleteUserByAdmin(username);
       alert("유저 탈퇴 처리가 완료되었습니다.");
       onUpdated();
-    } catch (error) {
+    } catch {
       alert("유저 탈퇴 처리 중 오류가 발생했습니다.");
     }
   };

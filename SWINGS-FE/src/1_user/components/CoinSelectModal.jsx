@@ -7,7 +7,6 @@ export default function CoinSelectModal({
   isOpen,
   onClose,
   coin,
-  userId,
   redirectToCheckout,
 }) {
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import { FaTrash } from "react-icons/fa";
 
 const DeleteConfirmModal = ({ visible, onCancel, onConfirm }) => {
@@ -9,13 +9,13 @@ const DeleteConfirmModal = ({ visible, onCancel, onConfirm }) => {
   return createPortal(
     <AnimatePresence>
       {visible ? (
-        <motion.div
+        <Motion.div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 16, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
@@ -52,8 +52,8 @@ const DeleteConfirmModal = ({ visible, onCancel, onConfirm }) => {
                 삭제하기
               </button>
             </div>
-          </motion.div>
-        </motion.div>
+          </Motion.div>
+        </Motion.div>
       ) : null}
     </AnimatePresence>,
     document.body

@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 
 const LikeButton = ({
@@ -23,7 +23,7 @@ const LikeButton = ({
 
   return (
     <div className="flex items-center space-x-2 outline-none focus:outline-none">
-      <motion.button
+      <Motion.button
         onClick={handleClick}
         disabled={isLoading}
         variants={heartVariants}
@@ -41,7 +41,7 @@ const LikeButton = ({
           }
         `}
       >
-        <motion.div
+        <Motion.div
           animate={{ scale: liked ? 1.2 : 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 10 }}
         >
@@ -50,11 +50,11 @@ const LikeButton = ({
           ) : (
             <FaRegHeart className="text-gray-500 text-base outline-none focus:outline-none" />
           )}
-        </motion.div>
-      </motion.button>
+        </Motion.div>
+      </Motion.button>
 
       {showCount && (
-        <motion.span
+        <Motion.span
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
@@ -63,7 +63,7 @@ const LikeButton = ({
           } transition-colors duration-300`}
         >
           {likeCount || 0}
-        </motion.span>
+        </Motion.span>
       )}
     </div>
   );

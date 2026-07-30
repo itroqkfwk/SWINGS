@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { FaSpinner } from "react-icons/fa"; // 🌟 스피너 아이콘 추가
 
 import SignupStep1 from "./SignupStep1";
@@ -107,7 +107,7 @@ export default function SignupContainer() {
         </p>
 
         <div className="w-full mb-6">
-          <motion.div
+          <Motion.div
             initial={{ width: 0 }}
             animate={{ width: `${((step + 1) / steps.length) * 100}%` }}
             transition={{ duration: 0.4 }}

@@ -1,5 +1,4 @@
 // src/1_user/utils/paymentUtils.js
-import { useNavigate } from "react-router-dom";
 
 const COIN_UNIT_PRICE = 1000;
 

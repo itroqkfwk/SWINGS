@@ -1,6 +1,5 @@
 import React from "react";
 import { FaTimes } from "react-icons/fa";
-import { normalizeImageUrl } from "../utils/imageUtils";
 
 const ImageModal = ({ imageUrl, onClose }) => {
   if (!imageUrl || typeof imageUrl !== "string") return null;

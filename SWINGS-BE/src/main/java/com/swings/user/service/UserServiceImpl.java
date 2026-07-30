@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
                 ))
                 .introduce(dto.getIntroduce() != null ? dto.getIntroduce() : "")
                 .userImg(dto.getUserImg())
-                .role(UserEntity.Role.fromString(dto.getRole() != null ? dto.getRole() : "player"))
+                .role(UserEntity.Role.player)
                 .activityRegion(UserEntity.ActivityRegion.fromString(
                         dto.getActivityRegion() != null ? dto.getActivityRegion() : "SEOUL"
                 ))
@@ -186,17 +186,11 @@ public class UserServiceImpl implements UserService {
         if (dto.getUserImg() != null) {
             user.setUserImg(dto.getUserImg());
         }
-        if (dto.getRole() != null) {
-            user.setRole(UserEntity.Role.fromString(dto.getRole()));
-        }
         if (dto.getGender() != null) {
             user.setGender(UserEntity.Gender.fromString(dto.getGender()));
         }
         if (dto.getActivityRegion() != null) {
             user.setActivityRegion(UserEntity.ActivityRegion.fromString(dto.getActivityRegion()));
-        }
-        if (dto.getIsVerified() != null) {
-            user.setVerified(dto.getIsVerified());
         }
 
         return userRepository.save(user);

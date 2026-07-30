@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { FaHeart, FaImages, FaUserFriends } from "react-icons/fa";
 
 const messages = [
@@ -45,12 +45,12 @@ export default function LoginLoadingScreen() {
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-[radial-gradient(circle_at_top,#ffe3ee_0%,#fffafc_42%,#dbeafe_100%)]">
       <div className="absolute inset-0">
-        <motion.div
+        <Motion.div
           className="absolute left-[10%] top-[14%] h-48 w-48 rounded-full bg-rose-200/60 blur-3xl"
           animate={{ scale: [1, 1.15, 1], opacity: [0.45, 0.75, 0.45] }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         />
-        <motion.div
+        <Motion.div
           className="absolute bottom-[12%] right-[10%] h-56 w-56 rounded-full bg-sky-200/60 blur-3xl"
           animate={{ scale: [1.1, 0.95, 1.1], opacity: [0.4, 0.7, 0.4] }}
           transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut" }}
@@ -84,7 +84,7 @@ export default function LoginLoadingScreen() {
           </div>
 
           <AnimatePresence mode="wait">
-            <motion.div
+            <Motion.div
               key={current.key}
               initial={{ opacity: 0, y: 18, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -105,20 +105,20 @@ export default function LoginLoadingScreen() {
                   </p>
                 </div>
 
-                <motion.div
+                <Motion.div
                   className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${current.accent} shadow-lg`}
                   animate={{ y: [0, -6, 0], rotate: [0, -4, 4, 0] }}
                   transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                 >
                   {current.icon}
-                </motion.div>
+                </Motion.div>
               </div>
-            </motion.div>
+            </Motion.div>
           </AnimatePresence>
 
           <div className="mt-5 space-y-3">
             <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-              <motion.div
+              <Motion.div
                 className="h-full rounded-full bg-gradient-to-r from-rose-400 via-pink-400 to-sky-400"
                 animate={{ x: ["-100%", "100%"] }}
                 transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}

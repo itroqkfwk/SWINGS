@@ -1,9 +1,7 @@
-import { useNavigate } from "react-router-dom";
 import { useNotification } from "../context/NotificationContext.jsx";
 
 export default function NotificationDropdown() {
     const { notifications, unreadCount } = useNotification();
-    const navigate = useNavigate();
 
     const latest = notifications.slice(0, 10); // 최근 10개만
 

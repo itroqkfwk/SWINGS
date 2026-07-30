@@ -128,3 +128,13 @@ export const canUserJoinGroup = async (matchGroupId, userId) => {
         return false;
     }
 };
+
+export const getMyParticipationGroups = async () => {
+    try {
+        const response = await axiosInstance.post("/matchParticipant/my", {});
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error("내 참가 모임 정보를 불러오지 못했습니다:", error);
+        return [];
+    }
+};

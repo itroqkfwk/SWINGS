@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { FaUserFriends, FaTimes, FaUser } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { normalizeImageUrl } from "../utils/imageUtils";
@@ -20,7 +20,7 @@ const FollowListModal = ({ users, onClose, title }) => {
 
   return (
     <div className="follow-list-modal fixed inset-0 bg-transparent z-[9999] flex items-center justify-center p-4">
-      <motion.div
+      <Motion.div
         ref={modalRef}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -94,7 +94,7 @@ const FollowListModal = ({ users, onClose, title }) => {
             </ul>
           )}
         </div>
-      </motion.div>
+      </Motion.div>
     </div>
   );
 };

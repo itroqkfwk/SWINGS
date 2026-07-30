@@ -8,6 +8,8 @@ import SwipeCard from "../components/SwipeCard";
 import SwipeModals from "../components/SwipeModals";
 import { useSwipeData } from "../hooks/useSwipeData";
 
+const MotionDiv = motion.div;
+
 function SwipePage() {
   const {
     currentUser,
@@ -209,7 +211,7 @@ function SwipePage() {
           <div className="flex flex-col gap-2">
             <AnimatePresence mode="wait">
               {profile ? (
-                <motion.div
+                <MotionDiv
                   key={profile.username}
                   initial={{ opacity: 0, y: 24, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -217,9 +219,9 @@ function SwipePage() {
                   transition={{ duration: 0.28 }}
                 >
                   <SwipeCard profile={profile} onSwipe={handleSwipe} />
-                </motion.div>
+                </MotionDiv>
               ) : (
-                <motion.div
+                <MotionDiv
                   key="empty-profile"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -232,7 +234,7 @@ function SwipePage() {
                   <p className="mt-2 text-sm leading-6 text-slate-500">
                     새로운 카드가 준비되면 다시 보여드릴게요.
                   </p>
-                </motion.div>
+                </MotionDiv>
               )}
             </AnimatePresence>
 

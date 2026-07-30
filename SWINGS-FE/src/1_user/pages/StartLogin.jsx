@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { loginRequest, googleLoginRequest } from "../api/userApi";
 import { saveToken } from "../utils/userUtils";
@@ -40,7 +40,7 @@ function GoogleLoginButton({ onSuccess, onError }) {
   });
 
   return (
-    <motion.button
+    <Motion.button
       type="button"
       onClick={() => googleLogin()}
       custom={7}
@@ -53,7 +53,7 @@ function GoogleLoginButton({ onSuccess, onError }) {
         className="mr-2 h-5 w-5"
       />
       Google로 로그인
-    </motion.button>
+    </Motion.button>
   );
 }
 
@@ -146,7 +146,7 @@ export default function StartLogin() {
     <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top,#ffe4ec_0%,#ffffff_45%,#dbeafe_100%)] px-4 py-8 sm:px-6">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-5xl items-center justify-center">
         <AnimatePresence>
-          <motion.div
+          <Motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -155,7 +155,7 @@ export default function StartLogin() {
             className="grid w-full max-w-4xl gap-8 overflow-hidden rounded-[2rem] bg-white/80 p-6 shadow-xl ring-1 ring-white/60 backdrop-blur md:grid-cols-[1.05fr_0.95fr] md:p-8"
           >
             <div className="flex flex-col justify-center rounded-[1.5rem] bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 p-8 text-white">
-              <motion.p
+              <Motion.p
                 custom={0}
                 variants={itemVariants}
                 initial="hidden"
@@ -163,8 +163,8 @@ export default function StartLogin() {
                 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/80"
               >
                 Golf Social Club
-              </motion.p>
-              <motion.h1
+              </Motion.p>
+              <Motion.h1
                 custom={1}
                 variants={itemVariants}
                 initial="hidden"
@@ -172,8 +172,8 @@ export default function StartLogin() {
                 className="mt-4 text-4xl font-black leading-tight sm:text-5xl"
               >
                 SWINGS
-              </motion.h1>
-              <motion.p
+              </Motion.h1>
+              <Motion.p
                 custom={2}
                 variants={itemVariants}
                 initial="hidden"
@@ -183,11 +183,11 @@ export default function StartLogin() {
                 골프로 시작하는 가벼운 연결.
                 <br />
                 라운드 메이트를 찾고, 대화를 이어가고, 모임까지 한 번에 관리해보세요.
-              </motion.p>
+              </Motion.p>
             </div>
 
             <div className="flex flex-col justify-center">
-              <motion.div
+              <Motion.div
                 custom={3}
                 variants={itemVariants}
                 initial="hidden"
@@ -198,15 +198,15 @@ export default function StartLogin() {
                 <p className="mt-2 text-sm text-gray-500">
                   계정 정보를 입력하고 서비스를 시작하세요.
                 </p>
-              </motion.div>
+              </Motion.div>
 
-              <motion.form
+              <Motion.form
                 onSubmit={handleSubmit}
                 className="space-y-4"
                 initial="hidden"
                 animate="visible"
               >
-                <motion.input
+                <Motion.input
                   custom={4}
                   variants={itemVariants}
                   type="text"
@@ -218,7 +218,7 @@ export default function StartLogin() {
                   }
                 />
 
-                <motion.input
+                <Motion.input
                   custom={5}
                   variants={itemVariants}
                   type="password"
@@ -230,7 +230,7 @@ export default function StartLogin() {
                   }
                 />
 
-                <motion.div
+                <Motion.div
                   custom={6}
                   variants={itemVariants}
                   className="flex items-center justify-between gap-3 text-sm"
@@ -252,9 +252,9 @@ export default function StartLogin() {
                   >
                     비밀번호 찾기
                   </button>
-                </motion.div>
+                </Motion.div>
 
-                <motion.button
+                <Motion.button
                   type="submit"
                   custom={7}
                   variants={itemVariants}
@@ -265,10 +265,10 @@ export default function StartLogin() {
                   }`}
                 >
                   로그인
-                </motion.button>
-              </motion.form>
+                </Motion.button>
+              </Motion.form>
 
-              <motion.div
+              <Motion.div
                 custom={8}
                 variants={itemVariants}
                 initial="hidden"
@@ -278,7 +278,7 @@ export default function StartLogin() {
                 <div className="h-px flex-1 bg-gray-200" />
                 <span className="px-3 text-xs font-medium text-gray-400">또는</span>
                 <div className="h-px flex-1 bg-gray-200" />
-              </motion.div>
+              </Motion.div>
 
               {googleClientId ? (
                 <GoogleLoginButton
@@ -286,7 +286,7 @@ export default function StartLogin() {
                   onError={handleGoogleError}
                 />
               ) : (
-                <motion.button
+                <Motion.button
                   type="button"
                   custom={9}
                   variants={itemVariants}
@@ -294,10 +294,10 @@ export default function StartLogin() {
                   className="h-12 w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-100 text-sm font-semibold text-gray-400"
                 >
                   Google 로그인 비활성화
-                </motion.button>
+                </Motion.button>
               )}
 
-              <motion.button
+              <Motion.button
                 type="button"
                 onClick={() => navigate("/swings/signup")}
                 custom={10}
@@ -307,9 +307,9 @@ export default function StartLogin() {
                 className="mt-4 h-12 w-full rounded-2xl bg-custom-pink text-sm font-bold text-white transition hover:opacity-95"
               >
                 회원가입
-              </motion.button>
+              </Motion.button>
             </div>
-          </motion.div>
+          </Motion.div>
         </AnimatePresence>
       </div>
 

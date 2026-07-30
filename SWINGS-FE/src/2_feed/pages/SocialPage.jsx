@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate, useParams } from "react-router-dom";
@@ -261,7 +261,7 @@ const SocialPage = () => {
 
       <AnimatePresence>
         {showNewPostForm && (
-          <motion.div
+          <Motion.div
             key="new-post-form"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -284,7 +284,7 @@ const SocialPage = () => {
                 isSubmitting={isSubmittingPost}
               />
             </div>
-          </motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
     </div>

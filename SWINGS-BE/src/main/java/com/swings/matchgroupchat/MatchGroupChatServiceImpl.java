@@ -2,10 +2,13 @@ package com.swings.matchgroupchat;
 
 import com.swings.chat.dto.ChatMessageDTO;
 import com.swings.matchgroup.entity.MatchGroupEntity;
+import com.swings.matchgroup.entity.MatchParticipantEntity;
 import com.swings.matchgroup.repository.MatchGroupRepository;
+import com.swings.matchgroup.repository.MatchParticipantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -14,17 +17,25 @@ public class MatchGroupChatServiceImpl implements MatchGroupChatService {
 
     private final MatchGroupRepository matchGroupRepository;
     private final MatchGroupChatRepository matchGroupChatRepository;
+    private final MatchParticipantRepository matchParticipantRepository;
 
     @Override
-    public void save(ChatMessageDTO dto){
+    public void save(ChatMessageDTO dto) {
         MatchGroupEntity group = matchGroupRepository.findById(dto.getRoomId())
-                .orElseThrow(() -> new IllegalArgumentException("매칭 그룹이 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("Match group does not exist."));
+
+        if (!isAcceptedParticipant(dto.getRoomId(), dto.getSender())) {
+            throw new IllegalArgumentException("The sender is not an accepted group participant.");
+        }
+        if (dto.getContent() == null || dto.getContent().isBlank()) {
+            throw new IllegalArgumentException("Message content is required.");
+        }
 
         MatchGroupChatEntity message = MatchGroupChatEntity.builder()
                 .matchGroup(group)
                 .sender(dto.getSender())
                 .content(dto.getContent())
-                .sentAt(dto.getSentAt() != null ? dto.getSentAt() : java.time.LocalDateTime.now())
+                .sentAt(dto.getSentAt() != null ? dto.getSentAt() : LocalDateTime.now())
                 .isRead(false)
                 .build();
 
@@ -40,9 +51,18 @@ public class MatchGroupChatServiceImpl implements MatchGroupChatService {
                         .sender(entity.getSender())
                         .content(entity.getContent())
                         .sentAt(entity.getSentAt())
-                        .senderName(null) // 💡 닉네임 또는 표시 이름이 있다면 여기에 세팅 가능
                         .build()
                 )
-                .toList(); // Java 16 이상. 낮은 버전이면 .collect(Collectors.toList())
+                .toList();
+    }
+
+    @Override
+    public boolean isAcceptedParticipant(Long matchGroupId, String username) {
+        return username != null && matchParticipantRepository
+                .existsByMatchGroup_MatchGroupIdAndUser_UsernameAndParticipantStatus(
+                        matchGroupId,
+                        username,
+                        MatchParticipantEntity.ParticipantStatus.ACCEPTED
+                );
     }
 }

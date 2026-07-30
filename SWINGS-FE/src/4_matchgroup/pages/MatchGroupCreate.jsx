@@ -6,7 +6,9 @@ import useGroupCreate from "../hooks/useGroupCreate";
 import { useKakaoMap } from "../hooks/useKakaoMap";
 import MatchGroupStepSection from "../components/MatchGroupStepSection";
 
-const MatchGroupCreate = ({ isModal = false, onSuccess }) => {
+const MotionDiv = motion.div;
+
+const MatchGroupCreate = ({ onSuccess }) => {
   const [step, setStep] = useState(1);
 
   const {
@@ -34,7 +36,7 @@ const MatchGroupCreate = ({ isModal = false, onSuccess }) => {
     <div className="relative flex max-h-[80vh] flex-col overflow-hidden">
       <AnimatePresence>
         {showSuccess && (
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -44,7 +46,7 @@ const MatchGroupCreate = ({ isModal = false, onSuccess }) => {
             <h2 className="mb-2 mt-6 text-xl font-bold text-green-600">
               그룹 생성 완료!
             </h2>
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
 

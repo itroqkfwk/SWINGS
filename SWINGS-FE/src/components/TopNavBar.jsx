@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Bell, Heart, LogOut, Shield, UserRound } from "lucide-react";
 import { fetchUserData } from "../1_user/api/userApi";
-import { removeToken } from "../1_user/utils/userUtils";
 import { useAuth } from "../1_user/context/AuthContext";
 import { useNotification } from "../5_notification/context/NotificationContext";
 import NotificationDropdown from "../5_notification/components/NotificationDropdown";
@@ -10,7 +9,7 @@ import NotificationDropdown from "../5_notification/components/NotificationDropd
 export default function TopNavBar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const { unreadCount } = useNotification();
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -46,8 +45,9 @@ export default function TopNavBar() {
   }, [token, location.pathname]);
 
   const handleLogout = () => {
-    removeToken();
-    navigate("/swings");
+    logout();
+    localStorage.removeItem("username");
+    navigate("/swings", { replace: true });
   };
 
   return (

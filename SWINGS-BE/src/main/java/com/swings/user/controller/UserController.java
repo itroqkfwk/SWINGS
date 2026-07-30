@@ -16,8 +16,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,8 +58,14 @@ public class UserController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<UserEntity> getUserByUsername(@PathVariable("username") String username) {
-        return ResponseEntity.ok(userService.getUserByUsername(username));
+    public ResponseEntity<UserDTO> getUserByUsername(
+            @PathVariable("username") String username,
+            Authentication authentication
+    ) {
+        if (authentication == null || !username.equals(authentication.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only view your own profile.");
+        }
+        return ResponseEntity.ok(userService.convertToDto(userService.getUserByUsername(username)));
     }
 
     @GetMapping("/me")
@@ -78,7 +86,14 @@ public class UserController {
     }
 
     @PatchMapping("/{username}")
-    public ResponseEntity<String> updateUser(@PathVariable("username") String username, @RequestBody UserDTO dto) {
+    public ResponseEntity<String> updateUser(
+            @PathVariable("username") String username,
+            @RequestBody UserDTO dto,
+            Authentication authentication
+    ) {
+        if (authentication == null || !username.equals(authentication.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own profile.");
+        }
         UserEntity updatedUser = userService.updateUser(username, dto);
         return ResponseEntity.ok("회원 정보 수정 완료! ID:" + updatedUser.getUserId());
     }
@@ -106,7 +121,13 @@ public class UserController {
     @GetMapping("/me/profile-image/{filename}")
     public ResponseEntity<Resource> getProfileImage(@PathVariable("filename") String filename) {
         try {
-            Path path = Paths.get(uploadDir).toAbsolutePath().normalize().resolve(filename);
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path path = uploadPath.resolve(filename).normalize();
+
+            if (!path.startsWith(uploadPath)) {
+                return ResponseEntity.badRequest().build();
+            }
+
             Resource resource = new UrlResource(path.toUri());
 
             if (!resource.exists() || !resource.isReadable()) {

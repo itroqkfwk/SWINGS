@@ -13,7 +13,7 @@ import {
   FaLink,
 } from "react-icons/fa";
 import { RiMentalHealthFill } from "react-icons/ri";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 
 const UserDetailCard = ({ user }) => {
   const 지역맵 = {
@@ -142,7 +142,7 @@ const UserDetailCard = ({ user }) => {
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {userDetails.map((detail, index) => (
-          <motion.div
+      <Motion.div
             key={index}
             className={`flex items-center space-x-3 p-4 ${detail.color} rounded-2xl hover:shadow-md transition-all cursor-default`}
             whileHover={{ scale: 1.02 }}
@@ -168,7 +168,7 @@ const UserDetailCard = ({ user }) => {
                 <p className="font-semibold text-gray-800">{detail.value}</p>
               )}
             </div>
-          </motion.div>
+      </Motion.div>
         ))}
       </div>
     </div>

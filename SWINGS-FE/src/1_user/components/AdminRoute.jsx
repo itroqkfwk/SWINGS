@@ -14,7 +14,7 @@ export default function AdminRoute({ children }) {
     if (decoded.role !== "admin") {
       return <Navigate to="/swings/feed" replace />;
     }
-  } catch (error) {
+  } catch {
     return <Navigate to="/swings" replace />;
   }
 
