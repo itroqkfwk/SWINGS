@@ -1,6 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL, API_TIMEOUT_MS } from "../../config/runtime";
-import { getToken } from "../utils/userUtils";
+import { getToken, removeToken } from "../utils/userUtils";
 
 const instance = axios.create({
   baseURL: API_BASE_URL,
@@ -21,7 +21,13 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.code === "ECONNABORTED") {
+    if (error.response && error.response.status === 401) {
+      removeToken();
+      if (typeof window !== "undefined" && !window.location.pathname.endsWith("/swings")) {
+        alert("로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
+        window.location.href = "/swings";
+      }
+    } else if (error.code === "ECONNABORTED") {
       error.message =
         "무료 서버(Render) 부팅 시간이 초과되었습니다. 약 30초 후 다시 시도해 주세요.";
     } else if (!error.response && error.message === "Network Error") {
