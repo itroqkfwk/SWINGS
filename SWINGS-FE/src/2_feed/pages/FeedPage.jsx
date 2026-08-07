@@ -270,7 +270,7 @@ const FeedPage = () => {
 
           <div
             ref={containerRef}
-            className="mx-auto grid w-full max-w-[1400px] gap-6 px-4 py-4 md:px-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-8"
+            className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-4 md:px-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-8"
           >
             <section className="min-w-0">
               <div className="mb-5 rounded-[2rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
