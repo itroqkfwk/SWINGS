@@ -52,7 +52,7 @@ export default function TopNavBar() {
 
   return (
     <header className="fixed left-0 right-0 top-3 z-50 px-3 sm:px-5 lg:px-8">
-      <div className="mx-auto flex h-16 w-full max-w-[1480px] items-center justify-between gap-2 rounded-[1.75rem] border border-white/70 bg-white/80 px-4 shadow-[0_20px_70px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-6">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 rounded-[1.75rem] border border-white/70 bg-white/80 px-4 shadow-[0_20px_70px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-6">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Link
             to="/swings/feed"

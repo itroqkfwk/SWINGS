@@ -48,7 +48,7 @@ export default function UserLayout() {
           !hideBars
             ? usePlainShell
               ? "w-full pb-24 pt-20"
-              : "mx-auto w-full max-w-[1480px] px-3 pb-24 pt-20 sm:px-5 lg:px-8"
+              : "mx-auto w-full max-w-6xl px-3 pb-24 pt-20 sm:px-5 lg:px-8"
             : ""
         }`}
       >
