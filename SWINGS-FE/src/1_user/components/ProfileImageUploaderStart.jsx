@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
-import { getProfileImageUrl, updateProfileImage } from "../api/userApi";
+import { X, UserCircle } from "lucide-react";
+import { deleteProfileImage, getProfileImageUrl, updateProfileImage } from "../api/userApi";
 import { toast } from "react-toastify";
 
 export default function ProfileImageUploaderStart({
@@ -44,21 +44,28 @@ export default function ProfileImageUploaderStart({
   };
 
   const handleSave = async () => {
-    if (!imageFile) {
-      toast.error("이미지를 선택해주세요.");
-      return;
-    }
-
     setIsSaving(true);
+
     try {
+      if (!imageFile) {
+        await deleteProfileImage();
+        toast.success("기본 프로필 이미지로 저장되었습니다.");
+        sessionStorage.setItem("skippedProfileUploader", "true");
+        onComplete?.(null);
+        onClose();
+        window.location.reload();
+        return;
+      }
+
       const res = await updateProfileImage(imageFile);
       toast.success("프로필 이미지가 저장되었습니다.");
+      sessionStorage.setItem("skippedProfileUploader", "true");
       onComplete?.(res.filename);
       onClose();
-      window.location.reload(); // ✅ 새로고침
+      window.location.reload();
     } catch (err) {
       console.error("업로드 실패:", err);
-      toast.error("업로드에 실패했습니다.");
+      toast.error("프로필 저장에 실패했습니다.");
     } finally {
       setIsSaving(false);
     }
@@ -103,8 +110,9 @@ export default function ProfileImageUploaderStart({
             </button>
           </>
         ) : (
-          <div className="w-36 h-36 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm">
-            미리보기 없음
+          <div className="w-36 h-36 rounded-full border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-400 shadow-sm">
+            <UserCircle className="text-gray-300" size={72} />
+            <span className="text-xs font-semibold text-gray-400 mt-1">기본 프로필</span>
           </div>
         )}
       </div>
