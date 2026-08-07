@@ -244,7 +244,7 @@ public class UserServiceImpl implements UserService {
                 }
             }
 
-            user.setUserImg(null);
+            user.setUserImg("DEFAULT");
             userRepository.save(user);
         } catch (Exception e) {
             throw new RuntimeException("프로필 이미지 초기화 실패: " + e.getMessage(), e);
