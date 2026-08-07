@@ -93,9 +93,9 @@ const FeedPage = () => {
 
     const init = async () => {
       try {
-        if (!currentUser.userImg) {
+        const skipped = sessionStorage.getItem("skippedProfileUploader") === "true";
+        if (!currentUser.userImg && !skipped) {
           setShowProfileUploader(true);
-          return;
         }
 
         const randomizedOrder = [...FEED_FLOW].sort(() => Math.random() - 0.5);
@@ -216,8 +216,14 @@ const FeedPage = () => {
             imageFile={imageFile}
             setImageFile={setImageFile}
             initialImage={null}
-            onClose={() => window.location.reload()}
-            onComplete={() => window.location.reload()}
+            onClose={() => {
+              sessionStorage.setItem("skippedProfileUploader", "true");
+              setShowProfileUploader(false);
+            }}
+            onComplete={() => {
+              sessionStorage.setItem("skippedProfileUploader", "true");
+              setShowProfileUploader(false);
+            }}
           />
         </div>
       ) : (
