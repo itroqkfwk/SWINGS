@@ -9,6 +9,7 @@ export default function useMatchGroupList(category) {
     const [currentUser, setCurrentUser] = useState(null);
     const [region, setRegion] = useState("전체");
     const [selectedDate, setSelectedDate] = useState("");
+    const [loading, setLoading] = useState(true);
 
     const regionOptions = [
         "전체", "서울", "경기", "인천", "부산", "대구", "광주", "대전",
@@ -24,6 +25,7 @@ export default function useMatchGroupList(category) {
     // 그룹 + 유저 데이터 불러오기
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
             try {
                 const [user, data, participations] = await Promise.all([
                     getCurrentUser(),
@@ -49,6 +51,8 @@ export default function useMatchGroupList(category) {
             } catch (error) {
                 console.error("데이터 로딩 오류:", error);
                 setGroups([]);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -88,5 +92,6 @@ export default function useMatchGroupList(category) {
         regionOptions,
         filteredGroups,
         currentUser,
+        loading,
     };
 }

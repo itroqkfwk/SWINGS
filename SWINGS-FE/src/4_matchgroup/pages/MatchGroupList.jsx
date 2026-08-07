@@ -47,6 +47,7 @@ const MatchGroupList = () => {
     selectedDate,
     setSelectedDate,
     filteredGroups,
+    loading,
   } = useMatchGroupList(category);
 
   const groupCountByDate = filteredGroups.reduce((accumulator, group) => {
@@ -199,7 +200,13 @@ const MatchGroupList = () => {
         </div>
       </div>
 
-      {filteredGroups.length === 0 ? (
+      {loading ? (
+        <div className="mt-10 flex flex-col items-center justify-center rounded-[1.75rem] border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-rose-200 border-t-rose-500" />
+          <p className="mt-4 text-base font-bold text-slate-700">모임 목록을 불러오는 중입니다...</p>
+          <p className="mt-1 text-xs text-slate-400">잠시만 기다려 주세요.</p>
+        </div>
+      ) : filteredGroups.length === 0 ? (
         <div className="mt-10 rounded-[1.75rem] border border-dashed border-slate-200 bg-white px-6 py-14 text-center text-gray-500">
           조건에 맞는 모임이 아직 없습니다.
         </div>

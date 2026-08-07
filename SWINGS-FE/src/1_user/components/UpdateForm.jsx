@@ -391,17 +391,18 @@ export default function UpdateForm() {
       <ResultModal
         modal={modal}
         onClose={() => {
-          if (modal.success && modal.logout) {
+          const wasLogout = modal.logout;
+          const wasSuccess = modal.success;
+          setModal({ open: false, success: false, message: "", logout: false });
+
+          if (wasSuccess && wasLogout) {
             setLogoutPending(true);
             return;
           }
 
-          if (modal.success) {
+          if (wasSuccess) {
             navigate("/swings/mypage");
-            return;
           }
-
-          setModal((prev) => ({ ...prev, open: false }));
         }}
       />
     </div>
