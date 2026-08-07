@@ -73,15 +73,6 @@ export default function ProfileImageUploaderStart({
 
   return (
     <div className="bg-white rounded-2xl p-6 w-[90%] max-w-sm relative shadow-lg">
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
-        title="닫기"
-      >
-        <X size={20} />
-      </button>
-
       {/* ✅ 알림 메시지 */}
       <div className="text-center mb-4 text-sm text-gray-600">
         <p className="text-xl font-semibold text-black">프로필 이미지</p>
@@ -132,17 +123,9 @@ export default function ProfileImageUploaderStart({
       <button
         onClick={handleSave}
         disabled={isSaving}
-        className="mt-4 w-full font-bold bg-custom-pink text-white text-sm py-2.5 rounded-full transition disabled:opacity-50"
+        className="mt-6 w-full font-bold bg-custom-pink text-white text-sm py-2.5 rounded-full transition disabled:opacity-50"
       >
         {isSaving ? "저장 중..." : "저장하기"}
-      </button>
-
-      <button
-        type="button"
-        onClick={onClose}
-        className="mt-2 w-full font-semibold text-gray-500 text-xs py-2 hover:text-gray-800 transition"
-      >
-        나중에 하기
       </button>
     </div>
   );
