@@ -1,7 +1,41 @@
-import React, { Suspense, lazy } from "react";
+import React, { Component, Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import PrivateRoute from "./1_user/components/PrivateRoute";
 import ScrollToTop from "./components/ScrollToTop";
+
+class ChunkErrorBoundary extends Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error) {
+    if (
+      error?.name === "ChunkLoadError" ||
+      error?.message?.includes("Failed to fetch dynamically imported module")
+    ) {
+      window.location.reload();
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center p-6 text-center">
+          <p className="text-lg font-bold text-slate-800">최신 화면으로 업데이트 중입니다...</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white"
+          >
+            새로고침
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const UserLayout = lazy(() => import("./1_user/layouts/UserLayout"));
 const AdminLayout = lazy(() => import("./1_user/layouts/AdminLayout"));
@@ -40,7 +74,7 @@ const RouteFallback = () => (
 
 export default function App() {
   return (
-    <>
+    <ChunkErrorBoundary>
       <ScrollToTop />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
@@ -73,6 +107,6 @@ export default function App() {
           </Route>
         </Routes>
       </Suspense>
-    </>
+    </ChunkErrorBoundary>
   );
 }
