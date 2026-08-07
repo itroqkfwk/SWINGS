@@ -16,5 +16,5 @@ export const UPLOADS_BASE_URL =
   `${API_BASE_URL}/uploads`;
 
 export const API_TIMEOUT_MS = Number(
-  readEnv("VITE_API_TIMEOUT_MS", "VITE_API_TIMEOUT") || "15000"
+  readEnv("VITE_API_TIMEOUT_MS", "VITE_API_TIMEOUT") || "60000"
 );

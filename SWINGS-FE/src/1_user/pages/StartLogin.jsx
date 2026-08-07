@@ -121,9 +121,12 @@ export default function StartLogin() {
     setErrorMessage("Google 로그인에 실패했습니다.");
   };
 
+  const [submitting, setSubmitting] = useState(false);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMessage("");
+    setSubmitting(true);
 
     try {
       const accessToken = await loginRequest(formData);
@@ -131,6 +134,8 @@ export default function StartLogin() {
       await registerPushToken(formData.username);
     } catch (error) {
       setErrorMessage(error.message || "로그인 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -258,13 +263,16 @@ export default function StartLogin() {
                   type="submit"
                   custom={7}
                   variants={itemVariants}
+                  disabled={submitting}
                   className={`h-12 w-full rounded-2xl text-sm font-bold text-white transition ${
-                    formData.username && formData.password
+                    submitting
+                      ? "bg-rose-400 cursor-wait opacity-80"
+                      : formData.username && formData.password
                       ? "bg-custom-purple shadow-md"
                       : "bg-custom-purple-empty"
                   }`}
                 >
-                  로그인
+                  {submitting ? "서버 부팅 및 로그인 중... (최대 30초 소요)" : "로그인"}
                 </Motion.button>
               </Motion.form>
 
