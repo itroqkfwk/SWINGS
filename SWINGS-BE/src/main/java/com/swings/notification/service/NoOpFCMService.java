@@ -1,12 +1,13 @@
 package com.swings.notification.service;
 
+import com.swings.notification.config.FirebaseDisabledCondition;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-@ConditionalOnMissingBean(FCMService.class)
+@Conditional(FirebaseDisabledCondition.class)
 public class NoOpFCMService implements FCMService {
 
     @Override
