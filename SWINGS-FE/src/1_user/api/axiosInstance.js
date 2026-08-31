@@ -5,10 +5,15 @@ import { getToken, removeToken } from "../utils/userUtils";
 const instance = axios.create({
   baseURL: API_BASE_URL,
   timeout: API_TIMEOUT_MS,
+  headers: {
+    "ngrok-skip-browser-warning": "69420",
+  },
 });
 
 instance.interceptors.request.use(
   (config) => {
+    config.headers = config.headers || {};
+    config.headers["ngrok-skip-browser-warning"] = "69420";
     const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
